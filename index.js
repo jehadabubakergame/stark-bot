@@ -1,4 +1,13 @@
-const { Client, GatewayIntentBits, EmbedBuilder, AuditLogEvent } = require('discord.js');
+const {
+    Client,
+    GatewayIntentBits,
+    EmbedBuilder,
+    AuditLogEvent,
+    ActionRowBuilder,
+    ButtonBuilder,
+    ButtonStyle
+} = require('discord.js');
+
 const {
     joinVoiceChannel,
     createAudioPlayer,
@@ -6,23 +15,26 @@ const {
     AudioPlayerStatus,
     NoSubscriberBehavior
 } = require('@discordjs/voice');
+
 const playdl = require('play-dl');
 const fs = require('fs');
+
 const MUSIC_CHANNEL_ID = '1479199357273116732';
 const musicQueues = new Map();
+
 const client = new Client({
     intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMembers,
-    GatewayIntentBits.GuildVoiceStates,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent
-]
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMembers,
+        GatewayIntentBits.GuildVoiceStates,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.MessageContent
+    ]
 });
+
 client.on('clientReady', () => {
     console.log(`البوت شغال: ${client.user.tag}`);
 });
-
 
 
 // --------------------------------------------------------دخول عضو----------------------------------------------------------
@@ -827,6 +839,99 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
 
 
 client.on('interactionCreate', async interaction => {
+
+    // أزرار لوحة الأغاني
+    if (interaction.isButton()) {
+        if (interaction.channel.id !== MUSIC_CHANNEL_ID) {
+            return interaction.reply({
+                content: '❌ أزرار الأغاني فقط في روم الأغاني.',
+                ephemeral: true
+            });
+        }
+
+        if (interaction.customId === 'music_play') {
+            return interaction.reply({
+                content: '▶️ للتشغيل استخدم الأمر: `/music action:تشغيل song:اسم الأغنية`',
+                ephemeral: true
+            });
+        }
+
+        if (interaction.customId === 'music_pause') {
+            return interaction.reply({
+                content: '⏸️ زر الإيقاف المؤقت جاهز، بنفع نفعّله بعدين.',
+                ephemeral: true
+            });
+        }
+
+        if (interaction.customId === 'music_skip') {
+            const queue = musicQueues.get(interaction.guild.id);
+
+            if (!queue || !queue.current) {
+                return interaction.reply({
+                    content: '❌ ما في أغنية شغالة.',
+                    ephemeral: true
+                });
+            }
+
+            queue.player.stop();
+
+            return interaction.reply({
+                content: '⏭️ تم عمل سكيب.',
+                ephemeral: true
+            });
+        }
+
+        if (interaction.customId === 'music_queue') {
+            const queue = musicQueues.get(interaction.guild.id);
+
+            if (!queue) {
+                return interaction.reply({
+                    content: '📜 القائمة فاضية.',
+                    ephemeral: true
+                });
+            }
+
+            const current = queue.current
+                ? `▶️ الآن: **${queue.current.title}**\n\n`
+                : 'ما في أغنية شغالة.\n\n';
+
+            const list = queue.songs.length
+                ? queue.songs.map((s, i) => `${i + 1}. ${s.title}`).join('\n')
+                : 'القائمة فاضية.';
+
+            return interaction.reply({
+                content: current + '📜 **القائمة:**\n' + list,
+                ephemeral: true
+            });
+        }
+
+        if (interaction.customId === 'music_stop') {
+            const queue = musicQueues.get(interaction.guild.id);
+
+            if (!queue) {
+                return interaction.reply({
+                    content: '❌ ما في شيء شغال.',
+                    ephemeral: true
+                });
+            }
+
+            queue.songs = [];
+            queue.current = null;
+            queue.player.stop();
+
+            if (queue.connection) {
+                queue.connection.destroy();
+            }
+
+            musicQueues.delete(interaction.guild.id);
+
+            return interaction.reply({
+                content: '⏹️ تم إيقاف الأغاني.',
+                ephemeral: true
+            });
+        }
+    }
+
     if (!interaction.isChatInputCommand()) return;
 
     if (interaction.commandName === 'join') {
@@ -884,6 +989,64 @@ client.on('interactionCreate', async interaction => {
                 ephemeral: true
             });
         }
+    }
+
+    if (interaction.commandName === 'panel') {
+        if (interaction.channel.id !== MUSIC_CHANNEL_ID) {
+            return interaction.reply({
+                content: '❌ لوحة الأغاني فقط في روم الأغاني.',
+                ephemeral: true
+            });
+        }
+
+        const embed = new EmbedBuilder()
+            .setColor('#0099ff')
+            .setTitle('🎵 Control Panel')
+            .setDescription('Click a button, and control the music bot!')
+            .addFields({
+                name: 'User Friendly Control Panel',
+                value: '▶️ Play | ⏸️ Pause | ⏭️ Skip | 📋 Queue | ⏹️ Stop'
+            })
+            .setFooter({ text: 'Music Control Panel' })
+            .setTimestamp();
+
+        const row = new ActionRowBuilder()
+            .addComponents(
+                new ButtonBuilder()
+                    .setCustomId('music_play')
+                    .setEmoji('▶️')
+                    .setLabel('Play')
+                    .setStyle(ButtonStyle.Primary),
+
+                new ButtonBuilder()
+                    .setCustomId('music_pause')
+                    .setEmoji('⏸️')
+                    .setLabel('Pause')
+                    .setStyle(ButtonStyle.Primary),
+
+                new ButtonBuilder()
+                    .setCustomId('music_skip')
+                    .setEmoji('⏭️')
+                    .setLabel('Skip')
+                    .setStyle(ButtonStyle.Primary),
+
+                new ButtonBuilder()
+                    .setCustomId('music_queue')
+                    .setEmoji('📋')
+                    .setLabel('Queue')
+                    .setStyle(ButtonStyle.Secondary),
+
+                new ButtonBuilder()
+                    .setCustomId('music_stop')
+                    .setEmoji('⏹️')
+                    .setLabel('Stop')
+                    .setStyle(ButtonStyle.Danger)
+            );
+
+        return interaction.reply({
+            embeds: [embed],
+            components: [row]
+        });
     }
 
     if (interaction.commandName === 'music') {
@@ -1036,7 +1199,6 @@ client.on('interactionCreate', async interaction => {
         }
     }
 });
-
 
 // ==================== لوقات دخول وخروج الرومات الصوتية ====================
 client.on('voiceStateUpdate', async (oldState, newState) => {
