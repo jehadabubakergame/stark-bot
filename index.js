@@ -984,6 +984,120 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
 
 
 
+// ==================== إحصائيات الرسائل والصوت ====================
+const STATS_FILE = './stats.json';
+
+function loadStats() {
+    if (!fs.existsSync(STATS_FILE)) return {};
+    return JSON.parse(fs.readFileSync(STATS_FILE, 'utf8'));
+}
+
+function saveStats(stats) {
+    fs.writeFileSync(STATS_FILE, JSON.stringify(stats, null, 2));
+}
+
+function ensureUser(stats, guildId, userId) {
+    if (!stats[guildId]) stats[guildId] = {};
+    if (!stats[guildId][userId]) {
+        stats[guildId][userId] = {
+            messages: 0,
+            voiceMs: 0,
+            joinedAt: null
+        };
+    }
+}
+
+client.on('messageCreate', message => {
+    if (!message.guild || message.author.bot) return;
+
+    const stats = loadStats();
+    ensureUser(stats, message.guild.id, message.author.id);
+
+    stats[message.guild.id][message.author.id].messages += 1;
+    saveStats(stats);
+});
+
+client.on('voiceStateUpdate', (oldState, newState) => {
+    const stats = loadStats();
+    const guildId = newState.guild.id;
+    const userId = newState.id;
+
+    if (newState.member?.user.bot) return;
+
+    if (!oldState.channel && newState.channel) {
+        ensureUser(stats, guildId, userId);
+        stats[guildId][userId].joinedAt = Date.now();
+        saveStats(stats);
+        return;
+    }
+
+    if (oldState.channel && !newState.channel) {
+        ensureUser(stats, guildId, userId);
+
+        const joinedAt = stats[guildId][userId].joinedAt;
+        if (joinedAt) {
+            stats[guildId][userId].voiceMs += Date.now() - joinedAt;
+            stats[guildId][userId].joinedAt = null;
+        }
+
+        saveStats(stats);
+    }
+});
+
+client.on('interactionCreate', async interaction => {
+    if (!interaction.isChatInputCommand()) return;
+
+    if (interaction.commandName === 'stats') {
+        const stats = loadStats();
+        const guildStats = stats[interaction.guild.id] || {};
+
+        let topVoice = null;
+        let topMessages = null;
+
+        for (const [userId, data] of Object.entries(guildStats)) {
+            let voiceMs = data.voiceMs || 0;
+
+            if (data.joinedAt) {
+                voiceMs += Date.now() - data.joinedAt;
+            }
+
+            if (!topVoice || voiceMs > topVoice.voiceMs) {
+                topVoice = { userId, voiceMs };
+            }
+
+            if (!topMessages || data.messages > topMessages.messages) {
+                topMessages = { userId, messages: data.messages };
+            }
+        }
+
+        const voiceMinutes = topVoice ? Math.floor(topVoice.voiceMs / 60000) : 0;
+
+        const embed = new EmbedBuilder()
+            .setColor('#00aaff')
+            .setTitle('📊 إحصائيات السيرفر')
+            .addFields(
+                {
+                    name: '🎙️ أكثر شخص تواجد بالصوت',
+                    value: topVoice ? `<@${topVoice.userId}>\n⏱️ ${voiceMinutes} دقيقة` : 'لا يوجد بيانات',
+                    inline: false
+                },
+                {
+                    name: '💬 أكثر شخص تفاعل بالرسائل',
+                    value: topMessages ? `<@${topMessages.userId}>\n✉️ ${topMessages.messages} رسالة` : 'لا يوجد بيانات',
+                    inline: false
+                }
+            )
+            .setTimestamp();
+
+        interaction.reply({ embeds: [embed] });
+    }
+});
+
+
+
+
+
+
 
 
 
