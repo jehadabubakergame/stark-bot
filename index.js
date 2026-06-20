@@ -1102,50 +1102,69 @@ client.on('interactionCreate', async interaction => {
 
 
 // أمر معلومات بدون سلاش
-client.on('messageCreate', message => {
+client.on('messageCreate', async message => {
     if (!message.guild || message.author.bot) return;
 
-    // الروم المسموح فيه فقط
     if (message.channel.id !== '1480695622582407419') return;
-
     if (message.content !== 'معلومات') return;
 
     const stats = loadStats();
     const guildStats = stats[message.guild.id] || {};
 
-    let topVoice = null;
-    let topMessages = null;
+    const voiceRanking = [];
+    const messageRanking = [];
 
     for (const [userId, data] of Object.entries(guildStats)) {
+
         let voiceMs = data.voiceMs || 0;
 
         if (data.joinedAt) {
             voiceMs += Date.now() - data.joinedAt;
         }
 
-        if (!topVoice || voiceMs > topVoice.voiceMs) {
-            topVoice = { userId, voiceMs };
-        }
+        voiceRanking.push({
+            userId,
+            minutes: Math.floor(voiceMs / 60000)
+        });
 
-        if (!topMessages || data.messages > topMessages.messages) {
-            topMessages = { userId, messages: data.messages };
-        }
+        messageRanking.push({
+            userId,
+            messages: data.messages || 0
+        });
     }
 
-    const voiceMinutes = topVoice ? Math.floor(topVoice.voiceMs / 60000) : 0;
+    voiceRanking.sort((a, b) => b.minutes - a.minutes);
+    messageRanking.sort((a, b) => b.messages - a.messages);
+
+    const topVoice = voiceRanking.slice(0, 10);
+    const topMessages = messageRanking.slice(0, 10);
+
+    let voiceText = '';
+    let messageText = '';
+
+    topVoice.forEach((user, index) => {
+        voiceText += `#${index + 1} <@${user.userId}> — ${user.minutes} دقيقة\n`;
+    });
+
+    topMessages.forEach((user, index) => {
+        messageText += `#${index + 1} <@${user.userId}> — ${user.messages} رسالة\n`;
+    });
+
+    if (!voiceText) voiceText = 'لا يوجد بيانات';
+    if (!messageText) messageText = 'لا يوجد بيانات';
 
     const embed = new EmbedBuilder()
-        .setColor('#00aaff')
-        .setTitle('📊 إحصائيات السيرفر')
+        .setColor('#FFD700')
+        .setTitle('🏆 إحصائيات السيرفر')
         .addFields(
             {
-                name: '🎙️ أكثر شخص تواجد بالصوت',
-                value: topVoice ? `<@${topVoice.userId}>\n⏱️ ${voiceMinutes} دقيقة` : 'لا يوجد بيانات',
+                name: '🎙️ Top 10 Voice',
+                value: voiceText,
                 inline: false
             },
             {
-                name: '💬 أكثر شخص تفاعل بالرسائل',
-                value: topMessages ? `<@${topMessages.userId}>\n✉️ ${topMessages.messages} رسالة` : 'لا يوجد بيانات',
+                name: '💬 Top 10 Messages',
+                value: messageText,
                 inline: false
             }
         )
@@ -1153,7 +1172,6 @@ client.on('messageCreate', message => {
 
     message.reply({ embeds: [embed] });
 });
-
 
 
 
