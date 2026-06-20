@@ -1213,50 +1213,46 @@ if (playdl.yt_validate(fixedLink) !== 'video') {
             });
         }
 
-        if (interaction.commandName === 'stats') {
-            const stats = loadStats();
-            const guildStats = stats[interaction.guild.id] || {};
+       if (interaction.commandName === 'stats') {
+    const stats = loadStats();
+    const guildStats = stats[interaction.guild.id] || {};
 
-            let topVoice = null;
-            let topMessages = null;
+    const topVoice = Object.entries(guildStats)
+        .map(([userId, data]) => {
+            let voiceMs = data.voiceMs || 0;
 
-            for (const [userId, data] of Object.entries(guildStats)) {
-                let voiceMs = data.voiceMs || 0;
-
-                if (data.joinedAt) {
-                    voiceMs += Date.now() - data.joinedAt;
-                }
-
-                if (!topVoice || voiceMs > topVoice.voiceMs) {
-                    topVoice = { userId, voiceMs };
-                }
-
-                if (!topMessages || data.messages > topMessages.messages) {
-                    topMessages = { userId, messages: data.messages };
-                }
+            if (data.joinedAt) {
+                voiceMs += Date.now() - data.joinedAt;
             }
 
-            const voiceMinutes = topVoice ? Math.floor(topVoice.voiceMs / 60000) : 0;
+            return { userId, voiceMs };
+        })
+        .filter(user => user.voiceMs > 0)
+        .sort((a, b) => b.voiceMs - a.voiceMs)
+        .slice(0, 10);
 
-            const embed = new EmbedBuilder()
-                .setColor('#00aaff')
-                .setTitle('📊 إحصائيات السيرفر')
-                .addFields(
-                    {
-                        name: '🎙️ أكثر شخص تواجد بالصوت',
-                        value: topVoice ? `<@${topVoice.userId}>\n⏱️ ${voiceMinutes} دقيقة` : 'لا يوجد بيانات',
-                        inline: false
-                    },
-                    {
-                        name: '💬 أكثر شخص تفاعل بالرسائل',
-                        value: topMessages ? `<@${topMessages.userId}>\n✉️ ${topMessages.messages} رسالة` : 'لا يوجد بيانات',
-                        inline: false
-                    }
-                )
-                .setTimestamp();
+    if (topVoice.length === 0) {
+        return interaction.reply({
+            content: '❌ لا يوجد بيانات صوتية بعد.',
+            ephemeral: true
+        });
+    }
 
-            return interaction.reply({ embeds: [embed] });
-        }
+    const description = topVoice.map((user, index) => {
+        const hours = Math.floor(user.voiceMs / 3600000);
+        const minutes = Math.floor((user.voiceMs % 3600000) / 60000);
+
+        return `🏅 **${index + 1}.** <@${user.userId}> — ${hours}h ${minutes}m`;
+    }).join('\n');
+
+    const embed = new EmbedBuilder()
+        .setColor('#00aaff')
+        .setTitle('🏆 Top 10 Voice Activity')
+        .setDescription(description)
+        .setTimestamp();
+
+    return interaction.reply({ embeds: [embed] });
+}
 
     } catch (error) {
         console.error('INTERACTION ERROR:', error);
