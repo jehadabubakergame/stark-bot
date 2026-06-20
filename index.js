@@ -1,6 +1,15 @@
 const { Client, GatewayIntentBits, EmbedBuilder, AuditLogEvent } = require('discord.js');
-const { joinVoiceChannel } = require('@discordjs/voice');
+const {
+    joinVoiceChannel,
+    createAudioPlayer,
+    createAudioResource,
+    AudioPlayerStatus,
+    NoSubscriberBehavior
+} = require('@discordjs/voice');
+const playdl = require('play-dl');
 const fs = require('fs');
+const MUSIC_CHANNEL_ID = '1479199357273116732';
+const musicQueues = new Map();
 const client = new Client({
     intents: [
     GatewayIntentBits.Guilds,
@@ -817,7 +826,6 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
 
 
 
-
 client.on('interactionCreate', async interaction => {
     if (!interaction.isChatInputCommand()) return;
 
@@ -877,8 +885,157 @@ client.on('interactionCreate', async interaction => {
             });
         }
     }
-});
 
+    if (interaction.commandName === 'music') {
+        if (interaction.channel.id !== MUSIC_CHANNEL_ID) {
+            return interaction.reply({
+                content: '❌ أمر الأغاني فقط في روم الأغاني.',
+                ephemeral: true
+            });
+        }
+
+        const action = interaction.options.getString('action');
+        const songQuery = interaction.options.getString('song');
+        const voiceChannel = interaction.member.voice.channel;
+
+        let queue = musicQueues.get(interaction.guild.id);
+
+        if (!queue) {
+            queue = {
+                songs: [],
+                player: createAudioPlayer({
+                    behaviors: {
+                        noSubscriber: NoSubscriberBehavior.Play
+                    }
+                }),
+                connection: null,
+                current: null
+            };
+
+            queue.player.on(AudioPlayerStatus.Idle, async () => {
+                queue.current = null;
+
+                const nextSong = queue.songs.shift();
+                if (!nextSong) return;
+
+                try {
+                    const stream = await playdl.stream(nextSong.url);
+                    const resource = createAudioResource(stream.stream, {
+                        inputType: stream.type
+                    });
+
+                    queue.current = nextSong;
+                    queue.player.play(resource);
+                } catch (err) {
+                    console.error(err);
+                }
+            });
+
+            musicQueues.set(interaction.guild.id, queue);
+        }
+
+        if (action === 'play') {
+            if (!voiceChannel) {
+                return interaction.reply({
+                    content: '❌ لازم تدخل روم صوتي أولاً.',
+                    ephemeral: true
+                });
+            }
+
+            if (!songQuery) {
+                return interaction.reply({
+                    content: '❌ اكتب اسم الأغنية أو رابط يوتيوب.',
+                    ephemeral: true
+                });
+            }
+
+            await interaction.deferReply();
+
+            try {
+                const results = await playdl.search(songQuery, { limit: 1 });
+
+                if (!results.length) {
+                    return interaction.editReply('❌ ما لقيت الأغنية.');
+                }
+
+                const song = {
+                    title: results[0].title,
+                    url: results[0].url
+                };
+
+                queue.songs.push(song);
+
+                if (!queue.connection) {
+                    queue.connection = joinVoiceChannel({
+                        channelId: voiceChannel.id,
+                        guildId: interaction.guild.id,
+                        adapterCreator: interaction.guild.voiceAdapterCreator,
+                        selfDeaf: false
+                    });
+
+                    queue.connection.subscribe(queue.player);
+                }
+
+                if (!queue.current) {
+                    const nextSong = queue.songs.shift();
+                    const stream = await playdl.stream(nextSong.url);
+                    const resource = createAudioResource(stream.stream, {
+                        inputType: stream.type
+                    });
+
+                    queue.current = nextSong;
+                    queue.player.play(resource);
+
+                    return interaction.editReply(`▶️ شغال الآن: **${nextSong.title}**`);
+                }
+
+                return interaction.editReply(`✅ انضافت للقائمة: **${song.title}**`);
+
+            } catch (error) {
+                console.error(error);
+                return interaction.editReply('❌ صار خطأ وأنا بحاول أشغل الأغنية.');
+            }
+        }
+
+        if (action === 'skip') {
+            if (!queue.current) {
+                return interaction.reply({
+                    content: '❌ ما في أغنية شغالة.',
+                    ephemeral: true
+                });
+            }
+
+            queue.player.stop();
+            return interaction.reply('⏭️ تم عمل سكيب.');
+        }
+
+        if (action === 'stop') {
+            queue.songs = [];
+            queue.current = null;
+            queue.player.stop();
+
+            if (queue.connection) {
+                queue.connection.destroy();
+            }
+
+            musicQueues.delete(interaction.guild.id);
+
+            return interaction.reply('⏹️ تم إيقاف الأغاني.');
+        }
+
+        if (action === 'list') {
+            const current = queue.current
+                ? `▶️ الآن: **${queue.current.title}**\n\n`
+                : 'ما في أغنية شغالة.\n\n';
+
+            const list = queue.songs.length
+                ? queue.songs.map((s, i) => `${i + 1}. ${s.title}`).join('\n')
+                : 'القائمة فاضية.';
+
+            return interaction.reply(current + '📜 **القائمة:**\n' + list);
+        }
+    }
+});
 
 
 // ==================== لوقات دخول وخروج الرومات الصوتية ====================
