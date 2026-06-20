@@ -1104,6 +1104,10 @@ client.on('interactionCreate', async interaction => {
 // أمر معلومات بدون سلاش
 client.on('messageCreate', message => {
     if (!message.guild || message.author.bot) return;
+
+    // الروم المسموح فيه فقط
+    if (message.channel.id !== '1480695622582407419') return;
+
     if (message.content !== 'معلومات') return;
 
     const stats = loadStats();
@@ -1149,7 +1153,6 @@ client.on('messageCreate', message => {
 
     message.reply({ embeds: [embed] });
 });
-
 
 
 
