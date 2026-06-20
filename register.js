@@ -25,26 +25,8 @@ const commands = [
         .toJSON(),
 
     new SlashCommandBuilder()
-        .setName('music')
-        .setDescription('أوامر الأغاني')
-        .addStringOption(option =>
-            option
-                .setName('action')
-                .setDescription('اختار الأمر')
-                .setRequired(true)
-                .addChoices(
-                    { name: 'تشغيل', value: 'play' },
-                    { name: 'إيقاف', value: 'stop' },
-                    { name: 'سكيب', value: 'skip' },
-                    { name: 'القائمة', value: 'list' }
-                )
-        )
-        .addStringOption(option =>
-            option
-                .setName('song')
-                .setDescription('اسم الأغنية أو رابط يوتيوب')
-                .setRequired(false)
-        )
+        .setName('panel')
+        .setDescription('لوحة تحكم الأغاني')
         .toJSON()
 ];
 
@@ -60,7 +42,7 @@ const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
             { body: commands }
         );
 
-        console.log('تم تسجيل الأوامر بنجاح ومعهم music');
+        console.log('تم تسجيل الأوامر بنجاح ومعهم panel');
     } catch (error) {
         console.error(error);
     }
