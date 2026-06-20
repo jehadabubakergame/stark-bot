@@ -4,6 +4,11 @@ const commands = [
     new SlashCommandBuilder()
         .setName('join')
         .setDescription('يدخل البوت إلى رومك الصوتي')
+        .toJSON(),
+
+    new SlashCommandBuilder()
+        .setName('stats')
+        .setDescription('يعرض إحصائيات السيرفر')
         .toJSON()
 ];
 
