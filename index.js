@@ -1,5 +1,6 @@
 const { Client, GatewayIntentBits, EmbedBuilder, AuditLogEvent } = require('discord.js');
 const { joinVoiceChannel } = require('@discordjs/voice');
+const fs = require('fs');
 const client = new Client({
     intents: [
     GatewayIntentBits.Guilds,
