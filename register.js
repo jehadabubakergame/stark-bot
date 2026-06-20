@@ -52,6 +52,7 @@ const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
 
 (async () => {
     try {
+        console.log('REGISTER FILE IS RUNNING');
         console.log('جاري تسجيل الأوامر...');
 
         await rest.put(
@@ -59,7 +60,7 @@ const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
             { body: commands }
         );
 
-        console.log('تم تسجيل الأوامر بنجاح');
+        console.log('تم تسجيل الأوامر بنجاح ومعهم music');
     } catch (error) {
         console.error(error);
     }
