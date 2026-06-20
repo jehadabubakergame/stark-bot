@@ -1101,8 +1101,51 @@ client.on('interactionCreate', async interaction => {
 
 
 
-// أمر معلومات بدون سلاش
+// ==================== معلومات العضو ====================
+if (message.content === 'معلوماتي') {
+    if (message.channel.id !== '1480695622582407419') return;
 
+    const member = message.member;
+
+    const joinedAt = member.joinedAt
+        ? `<t:${Math.floor(member.joinedAt.getTime() / 1000)}:F>`
+        : 'غير معروف';
+
+    const createdAt = `<t:${Math.floor(member.user.createdTimestamp / 1000)}:F>`;
+
+    const roles = member.roles.cache
+        .filter(role => role.id !== message.guild.id)
+        .sort((a, b) => b.position - a.position)
+        .map(role => role.toString())
+        .join(', ') || 'لا يوجد رولات';
+
+    message.reply({
+        embeds: [{
+            color: 0x00AEFF,
+            title: `معلومات ${member.user.username}`,
+            thumbnail: {
+                url: member.user.displayAvatarURL({ dynamic: true })
+            },
+            fields: [
+                {
+                    name: '📅 تاريخ إنشاء الحساب',
+                    value: createdAt,
+                    inline: false
+                },
+                {
+                    name: '📥 تاريخ دخول السيرفر',
+                    value: joinedAt,
+                    inline: false
+                },
+                {
+                    name: '🎭 الرولات الحالية',
+                    value: roles,
+                    inline: false
+                }
+            ]
+        }]
+    });
+}
 
 
 
