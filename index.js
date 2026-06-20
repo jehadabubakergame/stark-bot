@@ -921,18 +921,23 @@ client.on('interactionCreate', async interaction => {
             }
 
             await interaction.deferReply();
+const fixedLink = songQuery
+    .replace('music.youtube.com', 'www.youtube.com')
+    .split('&list=')[0];
 
-            if (playdl.yt_validate(songQuery) !== 'video') {
-                return interaction.editReply('❌ حط رابط يوتيوب مباشر فقط حالياً.');
-            }
+console.log('YOUTUBE LINK:', fixedLink);
+console.log('VALIDATE:', playdl.yt_validate(fixedLink));
 
+if (playdl.yt_validate(fixedLink) !== 'video') {
+    return interaction.editReply('❌ الرابط مش رابط فيديو يوتيوب مباشر.');
+}
             const queue = getMusicQueue(interaction.guild.id);
 
-            const info = await withTimeout(
-                playdl.video_info(songQuery),
-                20000,
-                'Video info timeout'
-            );
+           const info = await withTimeout(
+    playdl.video_info(fixedLink),
+    20000,
+    'Video info timeout'
+);
 
             const song = {
                 title: info.video_details.title,
