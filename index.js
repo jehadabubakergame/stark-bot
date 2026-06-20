@@ -1326,11 +1326,16 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
 
 
 // ==================== إحصائيات الرسائل والصوت ====================
+// ==================== إحصائيات الرسائل والصوت ====================
 const STATS_FILE = './stats.json';
 
 function loadStats() {
     if (!fs.existsSync(STATS_FILE)) return {};
-    return JSON.parse(fs.readFileSync(STATS_FILE, 'utf8'));
+    try {
+        return JSON.parse(fs.readFileSync(STATS_FILE, 'utf8'));
+    } catch {
+        return {};
+    }
 }
 
 function saveStats(stats) {
@@ -1348,6 +1353,7 @@ function ensureUser(stats, guildId, userId) {
     }
 }
 
+// يحسب الرسائل
 client.on('messageCreate', message => {
     if (!message.guild || message.author.bot) return;
 
@@ -1358,27 +1364,64 @@ client.on('messageCreate', message => {
     saveStats(stats);
 });
 
-client.on('voiceStateUpdate', (oldState, newState) => {
+// يحسب الناس اللي كانوا داخلين صوت أول ما البوت يشتغل
+client.once('ready', () => {
     const stats = loadStats();
-    const guildId = newState.guild.id;
-    const userId = newState.id;
 
-    if (newState.member?.user.bot) return;
+    client.guilds.cache.forEach(guild => {
+        guild.channels.cache.forEach(channel => {
+            if (!channel.members) return;
 
+            channel.members.forEach(member => {
+                if (member.user.bot) return;
+
+                ensureUser(stats, guild.id, member.id);
+
+                if (!stats[guild.id][member.id].joinedAt) {
+                    stats[guild.id][member.id].joinedAt = Date.now();
+                }
+            });
+        });
+    });
+
+    saveStats(stats);
+});
+
+// يحسب دخول وخروج الصوت
+client.on('voiceStateUpdate', (oldState, newState) => {
+    const member = newState.member || oldState.member;
+    if (!member || member.user.bot) return;
+
+    const stats = loadStats();
+    const guildId = member.guild.id;
+    const userId = member.id;
+
+    ensureUser(stats, guildId, userId);
+
+    // دخل صوت
     if (!oldState.channel && newState.channel) {
-        ensureUser(stats, guildId, userId);
         stats[guildId][userId].joinedAt = Date.now();
         saveStats(stats);
         return;
     }
 
+    // طلع من الصوت
     if (oldState.channel && !newState.channel) {
-        ensureUser(stats, guildId, userId);
-
         const joinedAt = stats[guildId][userId].joinedAt;
+
         if (joinedAt) {
             stats[guildId][userId].voiceMs += Date.now() - joinedAt;
             stats[guildId][userId].joinedAt = null;
+        }
+
+        saveStats(stats);
+        return;
+    }
+
+    // تنقل من روم لروم، نخليه مستمر وما نصفره
+    if (oldState.channel && newState.channel && oldState.channel.id !== newState.channel.id) {
+        if (!stats[guildId][userId].joinedAt) {
+            stats[guildId][userId].joinedAt = Date.now();
         }
 
         saveStats(stats);
