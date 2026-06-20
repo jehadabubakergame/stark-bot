@@ -1102,51 +1102,51 @@ client.on('interactionCreate', async interaction => {
 
 
 // ==================== معلومات العضو ====================
-if (message.content === 'معلوماتي') {
-    if (message.channel.id !== '1480695622582407419') return;
+client.on('messageCreate', async message => {
+    if (message.author.bot) return;
+    if (!message.guild) return;
 
-    const member = message.member;
+    if (message.content === 'معلوماتي') {
+        if (message.channel.id !== '1480695622582407419') return;
 
-    const joinedAt = member.joinedAt
-        ? `<t:${Math.floor(member.joinedAt.getTime() / 1000)}:F>`
-        : 'غير معروف';
+        const member = message.member;
 
-    const createdAt = `<t:${Math.floor(member.user.createdTimestamp / 1000)}:F>`;
+        const joinedAt = member.joinedTimestamp
+            ? `<t:${Math.floor(member.joinedTimestamp / 1000)}:F>`
+            : 'غير معروف';
 
-    const roles = member.roles.cache
-        .filter(role => role.id !== message.guild.id)
-        .sort((a, b) => b.position - a.position)
-        .map(role => role.toString())
-        .join(', ') || 'لا يوجد رولات';
+        const createdAt = `<t:${Math.floor(member.user.createdTimestamp / 1000)}:F>`;
 
-    message.reply({
-        embeds: [{
-            color: 0x00AEFF,
-            title: `معلومات ${member.user.username}`,
-            thumbnail: {
-                url: member.user.displayAvatarURL({ dynamic: true })
-            },
-            fields: [
-                {
-                    name: '📅 تاريخ إنشاء الحساب',
-                    value: createdAt,
-                    inline: false
+        const roles = member.roles.cache
+            .filter(role => role.id !== message.guild.id)
+            .map(role => role.toString())
+            .join(', ') || 'لا يوجد رولات';
+
+        await message.reply({
+            embeds: [{
+                title: `معلومات ${member.user.username}`,
+                color: 0x00AEFF,
+                thumbnail: {
+                    url: member.user.displayAvatarURL()
                 },
-                {
-                    name: '📥 تاريخ دخول السيرفر',
-                    value: joinedAt,
-                    inline: false
-                },
-                {
-                    name: '🎭 الرولات الحالية',
-                    value: roles,
-                    inline: false
-                }
-            ]
-        }]
-    });
-}
-
+                fields: [
+                    {
+                        name: '📅 تاريخ إنشاء الحساب',
+                        value: createdAt
+                    },
+                    {
+                        name: '📥 تاريخ دخول السيرفر',
+                        value: joinedAt
+                    },
+                    {
+                        name: '🎭 الرولات الحالية',
+                        value: roles
+                    }
+                ]
+            }]
+        });
+    }
+});
 
 
 
