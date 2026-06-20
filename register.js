@@ -22,6 +22,29 @@ const commands = [
                 .setMinValue(1)
                 .setMaxValue(100)
         )
+        .toJSON(),
+
+    new SlashCommandBuilder()
+        .setName('music')
+        .setDescription('أوامر الأغاني')
+        .addStringOption(option =>
+            option
+                .setName('action')
+                .setDescription('اختار الأمر')
+                .setRequired(true)
+                .addChoices(
+                    { name: 'تشغيل', value: 'play' },
+                    { name: 'إيقاف', value: 'stop' },
+                    { name: 'سكيب', value: 'skip' },
+                    { name: 'القائمة', value: 'list' }
+                )
+        )
+        .addStringOption(option =>
+            option
+                .setName('song')
+                .setDescription('اسم الأغنية أو رابط يوتيوب')
+                .setRequired(false)
+        )
         .toJSON()
 ];
 
