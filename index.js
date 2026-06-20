@@ -949,18 +949,67 @@ console.log('STEP 4');
                 console.error(error);
                 return interaction.editReply('❌ صار خطأ وأنا بحاول أشغل الأغنية.');
             }
-    // أزرار لوحة الأغاني
-   if (interaction.isButton()) {
-    try {
-        return interaction.reply({
-            content: `✅ الزر شغال: ${interaction.customId}`,
-            ephemeral: true
-        });
-    } catch (error) {
-        console.error('BUTTON ERROR:', error);
-    }
-}
+  client.on('interactionCreate', async interaction => {
 
+    // أزرار لوحة الأغاني
+    if (interaction.isButton()) {
+        try {
+            return interaction.reply({
+                content: `✅ الزر شغال: ${interaction.customId}`,
+                ephemeral: true
+            });
+        } catch (error) {
+            console.error('BUTTON ERROR:', error);
+        }
+    }
+
+    if (!interaction.isChatInputCommand()) return;
+
+    if (interaction.commandName === 'panel') {
+        const embed = new EmbedBuilder()
+            .setColor('#0099ff')
+            .setTitle('🎵 Control Panel')
+            .setDescription('Click a button, and control the music bot!');
+
+        const row = new ActionRowBuilder()
+            .addComponents(
+                new ButtonBuilder()
+                    .setCustomId('music_play')
+                    .setEmoji('▶️')
+                    .setLabel('Play')
+                    .setStyle(ButtonStyle.Primary),
+
+                new ButtonBuilder()
+                    .setCustomId('music_pause')
+                    .setEmoji('⏸️')
+                    .setLabel('Pause')
+                    .setStyle(ButtonStyle.Primary),
+
+                new ButtonBuilder()
+                    .setCustomId('music_skip')
+                    .setEmoji('⏭️')
+                    .setLabel('Skip')
+                    .setStyle(ButtonStyle.Primary),
+
+                new ButtonBuilder()
+                    .setCustomId('music_queue')
+                    .setEmoji('📋')
+                    .setLabel('Queue')
+                    .setStyle(ButtonStyle.Secondary),
+
+                new ButtonBuilder()
+                    .setCustomId('music_stop')
+                    .setEmoji('⏹️')
+                    .setLabel('Stop')
+                    .setStyle(ButtonStyle.Danger)
+            );
+
+        return interaction.reply({
+            embeds: [embed],
+            components: [row]
+        });
+    }
+});
         if (interaction.customId === 'music_play') {
             const modal = new ModalBuilder()
                 .setCustomId('music_play_modal')
