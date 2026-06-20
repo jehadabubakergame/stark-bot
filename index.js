@@ -342,6 +342,78 @@ client.on('guildBanAdd', async ban => {
 
 
 
+
+// ==================== لوقات التايم أوت ====================
+client.on('guildMemberUpdate', async (oldMember, newMember) => {
+    const channel = newMember.guild.channels.cache.get('1517916976435953704');
+    if (!channel) return;
+
+    const oldTimeout = oldMember.communicationDisabledUntilTimestamp;
+    const newTimeout = newMember.communicationDisabledUntilTimestamp;
+
+    if (oldTimeout === newTimeout) return;
+
+    let title = '';
+    let color = '';
+    let timeoutText = '';
+
+    if (!oldTimeout && newTimeout) {
+        title = '⏳ تم إعطاء تايم أوت';
+        color = '#ff3333';
+        timeoutText = `<t:${Math.floor(newTimeout / 1000)}:R>`;
+    } else if (oldTimeout && !newTimeout) {
+        title = '✅ تم فك التايم أوت';
+        color = '#00ff66';
+        timeoutText = 'تم فك التايم أوت';
+    } else if (oldTimeout && newTimeout && oldTimeout !== newTimeout) {
+        title = '♻️ تم تعديل مدة التايم أوت';
+        color = '#ffaa00';
+        timeoutText = `<t:${Math.floor(newTimeout / 1000)}:R>`;
+    } else {
+        return;
+    }
+
+    let executor = 'غير معروف';
+    let reason = 'لا يوجد سبب';
+
+    try {
+        const logs = await newMember.guild.fetchAuditLogs({
+            limit: 5,
+            type: AuditLogEvent.MemberUpdate
+        });
+
+        const log = logs.entries.find(entry =>
+            entry.target?.id === newMember.id &&
+            Date.now() - entry.createdTimestamp < 10000
+        );
+
+        if (log?.executor) executor = `<@${log.executor.id}>`;
+        if (log?.reason) reason = log.reason;
+    } catch {}
+
+    const embed = new EmbedBuilder()
+        .setColor(color)
+        .setTitle(title)
+        .setThumbnail(newMember.user.displayAvatarURL({ dynamic: true, size: 256 }))
+        .addFields(
+            { name: '👤 العضو', value: `${newMember}`, inline: false },
+            { name: '🛡️ المسؤول', value: executor, inline: false },
+            { name: '⏱️ المدة / الحالة', value: timeoutText, inline: false },
+            { name: '📌 السبب', value: reason, inline: false },
+            { name: '🆔 ID العضو', value: newMember.id, inline: false }
+        )
+        .setFooter({ text: newMember.guild.name })
+        .setTimestamp();
+
+    channel.send({ embeds: [embed] });
+});
+
+
+
+
+
+
+
 // ===================================================== طرد عضو =====================================================
 
 
@@ -848,6 +920,72 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
 
     logChannel.send({ embeds: [embed] });
 });
+
+
+
+
+
+
+
+
+
+// ==================== لوق ديسكونكت من الروم الصوتي ====================
+client.on('voiceStateUpdate', async (oldState, newState) => {
+    const logChannel = oldState.guild.channels.cache.get('1517957827027669093');
+    if (!logChannel) return;
+
+    const member = oldState.member;
+    if (!member) return;
+
+    // لازم يكون كان داخل روم وطلع منه
+    if (!oldState.channel || newState.channel) return;
+
+    let executor = 'غير معروف';
+    let reason = 'لا يوجد سبب';
+
+    try {
+        const logs = await oldState.guild.fetchAuditLogs({
+            limit: 5,
+            type: AuditLogEvent.MemberDisconnect
+        });
+
+        const log = logs.entries.find(entry =>
+            Date.now() - entry.createdTimestamp < 10000
+        );
+
+        if (!log) return;
+
+        if (log.executor) executor = `<@${log.executor.id}>`;
+        if (log.reason) reason = log.reason;
+    } catch {}
+
+    const embed = new EmbedBuilder()
+        .setColor('#ff3333')
+        .setTitle('📵 تم فصل عضو من روم صوتي')
+        .setThumbnail(member.user.displayAvatarURL({ dynamic: true, size: 256 }))
+        .addFields(
+            { name: '👤 العضو المفصول', value: `${member}`, inline: false },
+            { name: '🛡️ المسؤول', value: executor, inline: false },
+            { name: '📤 كان في روم', value: `${oldState.channel.name}`, inline: false },
+            { name: '📌 السبب', value: reason, inline: false },
+            { name: '🆔 ID العضو', value: member.id, inline: false }
+        )
+        .setFooter({ text: oldState.guild.name })
+        .setTimestamp();
+
+    logChannel.send({ embeds: [embed] });
+});
+
+
+
+
+
+
+
+
+
+
+
 
 
 
