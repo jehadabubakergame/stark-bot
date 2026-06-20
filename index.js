@@ -776,6 +776,80 @@ client.on('interactionCreate', async interaction => {
 
 
 
+// ==================== لوقات دخول وخروج الرومات الصوتية ====================
+client.on('voiceStateUpdate', async (oldState, newState) => {
+    const logChannel = newState.guild.channels.cache.get('1517939702148366508');
+    if (!logChannel) return;
+
+    const member = newState.member;
+    if (!member) return;
+
+    const oldChannel = oldState.channel;
+    const newChannel = newState.channel;
+
+    let title = '';
+    let color = '';
+    let description = '';
+
+    // دخل روم صوتي
+    if (!oldChannel && newChannel) {
+        title = '🔊 دخول روم صوتي';
+        color = '#00ff66';
+        description = `${member} دخل إلى روم صوتي`;
+    }
+
+    // خرج من روم صوتي
+    else if (oldChannel && !newChannel) {
+        title = '🔇 خروج من روم صوتي';
+        color = '#ff3333';
+        description = `${member} خرج من روم صوتي`;
+    }
+
+    // انتقل من روم لروم
+    else if (oldChannel && newChannel && oldChannel.id !== newChannel.id) {
+        title = '🔁 تنقل بين الرومات الصوتية';
+        color = '#ffaa00';
+        description = `${member} انتقل بين الرومات الصوتية`;
+    }
+
+    else {
+        return;
+    }
+
+    const embed = new EmbedBuilder()
+        .setColor(color)
+        .setTitle(title)
+        .setDescription(description)
+        .setThumbnail(member.user.displayAvatarURL({ dynamic: true, size: 256 }))
+        .addFields(
+            {
+                name: '👤 العضو',
+                value: `${member}`,
+                inline: false
+            },
+            {
+                name: '📤 من روم',
+                value: oldChannel ? `${oldChannel.name}` : 'لم يكن في روم صوتي',
+                inline: false
+            },
+            {
+                name: '📥 إلى روم',
+                value: newChannel ? `${newChannel.name}` : 'خرج من الرومات الصوتية',
+                inline: false
+            },
+            {
+                name: '🆔 ID العضو',
+                value: member.id,
+                inline: false
+            }
+        )
+        .setFooter({ text: newState.guild.name })
+        .setTimestamp();
+
+    logChannel.send({ embeds: [embed] });
+});
+
+
 
 
 client.login(process.env.TOKEN);
