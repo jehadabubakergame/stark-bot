@@ -5,7 +5,10 @@ const {
     AuditLogEvent,
     ActionRowBuilder,
     ButtonBuilder,
-    ButtonStyle
+    ButtonStyle,
+    ModalBuilder,
+    TextInputBuilder,
+    TextInputStyle
 } = require('discord.js');
 
 const {
@@ -837,8 +840,112 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
 
 
 
-
 client.on('interactionCreate', async interaction => {
+
+    // نافذة إدخال الأغنية
+    if (interaction.isModalSubmit()) {
+        if (interaction.customId === 'music_play_modal') {
+            if (interaction.channel.id !== MUSIC_CHANNEL_ID) {
+                return interaction.reply({
+                    content: '❌ الأغاني فقط في روم الأغاني.',
+                    ephemeral: true
+                });
+            }
+
+            const songQuery = interaction.fields.getTextInputValue('song_input');
+            const voiceChannel = interaction.member.voice.channel;
+
+            if (!voiceChannel) {
+                return interaction.reply({
+                    content: '❌ لازم تدخل روم صوتي أولاً.',
+                    ephemeral: true
+                });
+            }
+
+            await interaction.deferReply();
+
+            let queue = musicQueues.get(interaction.guild.id);
+
+            if (!queue) {
+                queue = {
+                    songs: [],
+                    player: createAudioPlayer({
+                        behaviors: {
+                            noSubscriber: NoSubscriberBehavior.Play
+                        }
+                    }),
+                    connection: null,
+                    current: null
+                };
+
+                queue.player.on(AudioPlayerStatus.Idle, async () => {
+                    queue.current = null;
+
+                    const nextSong = queue.songs.shift();
+                    if (!nextSong) return;
+
+                    try {
+                        const stream = await playdl.stream(nextSong.url);
+                        const resource = createAudioResource(stream.stream, {
+                            inputType: stream.type
+                        });
+
+                        queue.current = nextSong;
+                        queue.player.play(resource);
+                    } catch (err) {
+                        console.error(err);
+                    }
+                });
+
+                musicQueues.set(interaction.guild.id, queue);
+            }
+
+            try {
+                const results = await playdl.search(songQuery, { limit: 1 });
+
+                if (!results.length) {
+                    return interaction.editReply('❌ ما لقيت الأغنية.');
+                }
+
+                const song = {
+                    title: results[0].title,
+                    url: results[0].url
+                };
+
+                queue.songs.push(song);
+
+                if (!queue.connection) {
+                    queue.connection = joinVoiceChannel({
+                        channelId: voiceChannel.id,
+                        guildId: interaction.guild.id,
+                        adapterCreator: interaction.guild.voiceAdapterCreator,
+                        selfDeaf: false
+                    });
+
+                    queue.connection.subscribe(queue.player);
+                }
+
+                if (!queue.current) {
+                    const nextSong = queue.songs.shift();
+                    const stream = await playdl.stream(nextSong.url);
+                    const resource = createAudioResource(stream.stream, {
+                        inputType: stream.type
+                    });
+
+                    queue.current = nextSong;
+                    queue.player.play(resource);
+
+                    return interaction.editReply(`▶️ شغال الآن: **${nextSong.title}**`);
+                }
+
+                return interaction.editReply(`✅ انضافت للقائمة: **${song.title}**`);
+
+            } catch (error) {
+                console.error(error);
+                return interaction.editReply('❌ صار خطأ وأنا بحاول أشغل الأغنية.');
+            }
+        }
+    }
 
     // أزرار لوحة الأغاني
     if (interaction.isButton()) {
@@ -850,15 +957,37 @@ client.on('interactionCreate', async interaction => {
         }
 
         if (interaction.customId === 'music_play') {
-            return interaction.reply({
-                content: '▶️ للتشغيل استخدم الأمر: `/music action:تشغيل song:اسم الأغنية`',
-                ephemeral: true
-            });
+            const modal = new ModalBuilder()
+                .setCustomId('music_play_modal')
+                .setTitle('تشغيل أغنية');
+
+            const songInput = new TextInputBuilder()
+                .setCustomId('song_input')
+                .setLabel('حط رابط يوتيوب أو اسم الأغنية')
+                .setStyle(TextInputStyle.Short)
+                .setRequired(true);
+
+            const row = new ActionRowBuilder().addComponents(songInput);
+
+            modal.addComponents(row);
+
+            return interaction.showModal(modal);
         }
 
         if (interaction.customId === 'music_pause') {
+            const queue = musicQueues.get(interaction.guild.id);
+
+            if (!queue || !queue.current) {
+                return interaction.reply({
+                    content: '❌ ما في أغنية شغالة.',
+                    ephemeral: true
+                });
+            }
+
+            queue.player.pause();
+
             return interaction.reply({
-                content: '⏸️ زر الإيقاف المؤقت جاهز، بنفع نفعّله بعدين.',
+                content: '⏸️ تم إيقاف الأغنية مؤقتاً.',
                 ephemeral: true
             });
         }
@@ -935,7 +1064,6 @@ client.on('interactionCreate', async interaction => {
     if (!interaction.isChatInputCommand()) return;
 
     if (interaction.commandName === 'join') {
-
         const voiceChannel = interaction.member.voice.channel;
 
         if (!voiceChannel) {
@@ -953,7 +1081,7 @@ client.on('interactionCreate', async interaction => {
             selfMute: false
         });
 
-        await interaction.reply(`✅ دخلت روم: ${voiceChannel.name}`);
+        return interaction.reply(`✅ دخلت روم: ${voiceChannel.name}`);
     }
 
     if (interaction.commandName === 'clear') {
@@ -976,7 +1104,7 @@ client.on('interactionCreate', async interaction => {
         try {
             await interaction.channel.bulkDelete(amount, true);
 
-            await interaction.reply({
+            return interaction.reply({
                 content: `✅ تم حذف ${amount} رسالة.`,
                 ephemeral: true
             });
@@ -984,7 +1112,7 @@ client.on('interactionCreate', async interaction => {
         } catch (error) {
             console.error(error);
 
-            await interaction.reply({
+            return interaction.reply({
                 content: '❌ ما قدرت أحذف الرسائل. يمكن الرسائل أقدم من 14 يوم.',
                 ephemeral: true
             });
@@ -1048,235 +1176,7 @@ client.on('interactionCreate', async interaction => {
             components: [row]
         });
     }
-
-    if (interaction.commandName === 'music') {
-        if (interaction.channel.id !== MUSIC_CHANNEL_ID) {
-            return interaction.reply({
-                content: '❌ أمر الأغاني فقط في روم الأغاني.',
-                ephemeral: true
-            });
-        }
-
-        const action = interaction.options.getString('action');
-        const songQuery = interaction.options.getString('song');
-        const voiceChannel = interaction.member.voice.channel;
-
-        let queue = musicQueues.get(interaction.guild.id);
-
-        if (!queue) {
-            queue = {
-                songs: [],
-                player: createAudioPlayer({
-                    behaviors: {
-                        noSubscriber: NoSubscriberBehavior.Play
-                    }
-                }),
-                connection: null,
-                current: null
-            };
-
-            queue.player.on(AudioPlayerStatus.Idle, async () => {
-                queue.current = null;
-
-                const nextSong = queue.songs.shift();
-                if (!nextSong) return;
-
-                try {
-                    const stream = await playdl.stream(nextSong.url);
-                    const resource = createAudioResource(stream.stream, {
-                        inputType: stream.type
-                    });
-
-                    queue.current = nextSong;
-                    queue.player.play(resource);
-                } catch (err) {
-                    console.error(err);
-                }
-            });
-
-            musicQueues.set(interaction.guild.id, queue);
-        }
-
-        if (action === 'play') {
-            if (!voiceChannel) {
-                return interaction.reply({
-                    content: '❌ لازم تدخل روم صوتي أولاً.',
-                    ephemeral: true
-                });
-            }
-
-            if (!songQuery) {
-                return interaction.reply({
-                    content: '❌ اكتب اسم الأغنية أو رابط يوتيوب.',
-                    ephemeral: true
-                });
-            }
-
-            await interaction.deferReply();
-
-            try {
-                const results = await playdl.search(songQuery, { limit: 1 });
-
-                if (!results.length) {
-                    return interaction.editReply('❌ ما لقيت الأغنية.');
-                }
-
-                const song = {
-                    title: results[0].title,
-                    url: results[0].url
-                };
-
-                queue.songs.push(song);
-
-                if (!queue.connection) {
-                    queue.connection = joinVoiceChannel({
-                        channelId: voiceChannel.id,
-                        guildId: interaction.guild.id,
-                        adapterCreator: interaction.guild.voiceAdapterCreator,
-                        selfDeaf: false
-                    });
-
-                    queue.connection.subscribe(queue.player);
-                }
-
-                if (!queue.current) {
-                    const nextSong = queue.songs.shift();
-                    const stream = await playdl.stream(nextSong.url);
-                    const resource = createAudioResource(stream.stream, {
-                        inputType: stream.type
-                    });
-
-                    queue.current = nextSong;
-                    queue.player.play(resource);
-
-                    return interaction.editReply(`▶️ شغال الآن: **${nextSong.title}**`);
-                }
-
-                return interaction.editReply(`✅ انضافت للقائمة: **${song.title}**`);
-
-            } catch (error) {
-                console.error(error);
-                return interaction.editReply('❌ صار خطأ وأنا بحاول أشغل الأغنية.');
-            }
-        }
-
-        if (action === 'skip') {
-            if (!queue.current) {
-                return interaction.reply({
-                    content: '❌ ما في أغنية شغالة.',
-                    ephemeral: true
-                });
-            }
-
-            queue.player.stop();
-            return interaction.reply('⏭️ تم عمل سكيب.');
-        }
-
-        if (action === 'stop') {
-            queue.songs = [];
-            queue.current = null;
-            queue.player.stop();
-
-            if (queue.connection) {
-                queue.connection.destroy();
-            }
-
-            musicQueues.delete(interaction.guild.id);
-
-            return interaction.reply('⏹️ تم إيقاف الأغاني.');
-        }
-
-        if (action === 'list') {
-            const current = queue.current
-                ? `▶️ الآن: **${queue.current.title}**\n\n`
-                : 'ما في أغنية شغالة.\n\n';
-
-            const list = queue.songs.length
-                ? queue.songs.map((s, i) => `${i + 1}. ${s.title}`).join('\n')
-                : 'القائمة فاضية.';
-
-            return interaction.reply(current + '📜 **القائمة:**\n' + list);
-        }
-    }
 });
-
-// ==================== لوقات دخول وخروج الرومات الصوتية ====================
-client.on('voiceStateUpdate', async (oldState, newState) => {
-    const logChannel = newState.guild.channels.cache.get('1517939702148366508');
-    if (!logChannel) return;
-
-    const member = newState.member;
-    if (!member) return;
-
-    const oldChannel = oldState.channel;
-    const newChannel = newState.channel;
-
-    let title = '';
-    let color = '';
-    let description = '';
-
-    // دخل روم صوتي
-    if (!oldChannel && newChannel) {
-        title = '🔊 دخول روم صوتي';
-        color = '#00ff66';
-        description = `${member} دخل إلى روم صوتي`;
-    }
-
-    // خرج من روم صوتي
-    else if (oldChannel && !newChannel) {
-        title = '🔇 خروج من روم صوتي';
-        color = '#ff3333';
-        description = `${member} خرج من روم صوتي`;
-    }
-
-    // انتقل من روم لروم
-    else if (oldChannel && newChannel && oldChannel.id !== newChannel.id) {
-        title = '🔁 تنقل بين الرومات الصوتية';
-        color = '#ffaa00';
-        description = `${member} انتقل بين الرومات الصوتية`;
-    }
-
-    else {
-        return;
-    }
-
-    const embed = new EmbedBuilder()
-        .setColor(color)
-        .setTitle(title)
-        .setDescription(description)
-        .setThumbnail(member.user.displayAvatarURL({ dynamic: true, size: 256 }))
-        .addFields(
-            {
-                name: '👤 العضو',
-                value: `${member}`,
-                inline: false
-            },
-            {
-                name: '📤 من روم',
-                value: oldChannel ? `${oldChannel.name}` : 'لم يكن في روم صوتي',
-                inline: false
-            },
-            {
-                name: '📥 إلى روم',
-                value: newChannel ? `${newChannel.name}` : 'خرج من الرومات الصوتية',
-                inline: false
-            },
-            {
-                name: '🆔 ID العضو',
-                value: member.id,
-                inline: false
-            }
-        )
-        .setFooter({ text: newState.guild.name })
-        .setTimestamp();
-
-    logChannel.send({ embeds: [embed] });
-});
-
-
-
-
-
 
 
 
