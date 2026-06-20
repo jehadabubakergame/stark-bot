@@ -899,17 +899,18 @@ client.on('interactionCreate', async interaction => {
 
                 musicQueues.set(interaction.guild.id, queue);
             }
-
             try {
-                const results = await playdl.search(songQuery, { limit: 1 });
+                let song;
 
-                if (!results.length) {
-                    return interaction.editReply('❌ ما لقيت الأغنية.');
+                if (playdl.yt_validate(songQuery) !== 'video') {
+                    return interaction.editReply('❌ حط رابط يوتيوب مباشر فقط حالياً.');
                 }
 
-                const song = {
-                    title: results[0].title,
-                    url: results[0].url
+                const info = await playdl.video_info(songQuery);
+
+                song = {
+                    title: info.video_details.title,
+                    url: info.video_details.url
                 };
 
                 queue.songs.push(song);
@@ -944,9 +945,6 @@ client.on('interactionCreate', async interaction => {
                 console.error(error);
                 return interaction.editReply('❌ صار خطأ وأنا بحاول أشغل الأغنية.');
             }
-        }
-    }
-
     // أزرار لوحة الأغاني
     if (interaction.isButton()) {
         if (interaction.channel.id !== MUSIC_CHANNEL_ID) {
