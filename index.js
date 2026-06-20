@@ -842,10 +842,42 @@ client.on('interactionCreate', async interaction => {
 
         await interaction.reply(`✅ دخلت روم: ${voiceChannel.name}`);
     }
+
+    if (interaction.commandName === 'clear') {
+        if (!interaction.member.permissions.has('ManageMessages')) {
+            return interaction.reply({
+                content: '❌ ما عندك صلاحية حذف الرسائل.',
+                ephemeral: true
+            });
+        }
+
+        if (!interaction.guild.members.me.permissions.has('ManageMessages')) {
+            return interaction.reply({
+                content: '❌ البوت ما عنده صلاحية حذف الرسائل.',
+                ephemeral: true
+            });
+        }
+
+        const amount = interaction.options.getInteger('amount');
+
+        try {
+            await interaction.channel.bulkDelete(amount, true);
+
+            await interaction.reply({
+                content: `✅ تم حذف ${amount} رسالة.`,
+                ephemeral: true
+            });
+
+        } catch (error) {
+            console.error(error);
+
+            await interaction.reply({
+                content: '❌ ما قدرت أحذف الرسائل. يمكن الرسائل أقدم من 14 يوم.',
+                ephemeral: true
+            });
+        }
+    }
 });
-
-
-
 
 
 
