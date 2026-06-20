@@ -950,13 +950,16 @@ console.log('STEP 4');
                 return interaction.editReply('❌ صار خطأ وأنا بحاول أشغل الأغنية.');
             }
     // أزرار لوحة الأغاني
-    if (interaction.isButton()) {
-        if (interaction.channel.id !== MUSIC_CHANNEL_ID) {
-            return interaction.reply({
-                content: '❌ أزرار الأغاني فقط في روم الأغاني.',
-                ephemeral: true
-            });
-        }
+   if (interaction.isButton()) {
+    try {
+        return interaction.reply({
+            content: `✅ الزر شغال: ${interaction.customId}`,
+            ephemeral: true
+        });
+    } catch (error) {
+        console.error('BUTTON ERROR:', error);
+    }
+}
 
         if (interaction.customId === 'music_play') {
             const modal = new ModalBuilder()
