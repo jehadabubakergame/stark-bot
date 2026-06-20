@@ -906,7 +906,9 @@ client.on('interactionCreate', async interaction => {
                     return interaction.editReply('❌ حط رابط يوتيوب مباشر فقط حالياً.');
                 }
 
-                const info = await playdl.video_info(songQuery);
+                console.log('STEP 1');
+const info = await playdl.video_info(songQuery);
+console.log('STEP 2');
 
                 song = {
                     title: info.video_details.title,
@@ -928,7 +930,9 @@ client.on('interactionCreate', async interaction => {
 
                 if (!queue.current) {
                     const nextSong = queue.songs.shift();
-                    const stream = await playdl.stream(nextSong.url);
+                    console.log('STEP 3');
+const stream = await playdl.stream(nextSong.url);
+console.log('STEP 4');
                     const resource = createAudioResource(stream.stream, {
                         inputType: stream.type
                     });
