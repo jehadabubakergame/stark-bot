@@ -1100,6 +1100,61 @@ client.on('interactionCreate', async interaction => {
 
 
 
+// أمر معلومات بدون سلاش
+client.on('messageCreate', message => {
+    if (!message.guild || message.author.bot) return;
+    if (message.content !== 'معلومات') return;
+
+    const stats = loadStats();
+    const guildStats = stats[message.guild.id] || {};
+
+    let topVoice = null;
+    let topMessages = null;
+
+    for (const [userId, data] of Object.entries(guildStats)) {
+        let voiceMs = data.voiceMs || 0;
+
+        if (data.joinedAt) {
+            voiceMs += Date.now() - data.joinedAt;
+        }
+
+        if (!topVoice || voiceMs > topVoice.voiceMs) {
+            topVoice = { userId, voiceMs };
+        }
+
+        if (!topMessages || data.messages > topMessages.messages) {
+            topMessages = { userId, messages: data.messages };
+        }
+    }
+
+    const voiceMinutes = topVoice ? Math.floor(topVoice.voiceMs / 60000) : 0;
+
+    const embed = new EmbedBuilder()
+        .setColor('#00aaff')
+        .setTitle('📊 إحصائيات السيرفر')
+        .addFields(
+            {
+                name: '🎙️ أكثر شخص تواجد بالصوت',
+                value: topVoice ? `<@${topVoice.userId}>\n⏱️ ${voiceMinutes} دقيقة` : 'لا يوجد بيانات',
+                inline: false
+            },
+            {
+                name: '💬 أكثر شخص تفاعل بالرسائل',
+                value: topMessages ? `<@${topMessages.userId}>\n✉️ ${topMessages.messages} رسالة` : 'لا يوجد بيانات',
+                inline: false
+            }
+        )
+        .setTimestamp();
+
+    message.reply({ embeds: [embed] });
+});
+
+
+
+
+
+
+
 
 
 
