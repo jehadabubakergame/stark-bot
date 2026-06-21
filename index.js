@@ -25,6 +25,33 @@ const fs = require('fs');
 const MUSIC_CHANNEL_ID = '1479199357273116732';
 const musicQueues = new Map();
 
+// ==================== إحصائيات الرسائل والصوت ====================
+const STATS_FILE = './stats.json';
+
+function loadStats() {
+    if (!fs.existsSync(STATS_FILE)) return {};
+    try {
+        return JSON.parse(fs.readFileSync(STATS_FILE, 'utf8'));
+    } catch {
+        return {};
+    }
+}
+
+function saveStats(stats) {
+    fs.writeFileSync(STATS_FILE, JSON.stringify(stats, null, 2));
+}
+
+function ensureUser(stats, guildId, userId) {
+    if (!stats[guildId]) stats[guildId] = {};
+    if (!stats[guildId][userId]) {
+        stats[guildId][userId] = {
+            messages: 0,
+            voiceMs: 0,
+            joinedAt: null
+        };
+    }
+}
+
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -38,37 +65,6 @@ const client = new Client({
 client.on('clientReady', () => {
     console.log(`البوت شغال: ${client.user.tag}`);
 });
-
-
-// --------------------------------------------------------دخول عضو----------------------------------------------------------
-
-
-client.on('guildMemberAdd', member => {
-   const channel = member.guild.channels.cache.get('1517912082014535710');
-
-    if (!channel) return;
-
-    const embed = new EmbedBuilder()
-        .setColor('#00ff66')
-        .setAuthor({
-            name: member.user.tag,
-            iconURL: member.user.displayAvatarURL({ dynamic: true })
-        })
-        .setTitle('📥 عضو جديد')
-        .setDescription(`${member} انضم إلى السيرفر`)
-        .setThumbnail(member.user.displayAvatarURL({ dynamic: true, size: 256 }))
-        .addFields(
-            { name: '🆔 ID', value: member.id, inline: true },
-            { name: '👥 عدد الأعضاء', value: `${member.guild.memberCount}`, inline: true },
-            { name: '📅 عمر الحساب', value: `<t:${Math.floor(member.user.createdTimestamp / 1000)}:R>` }
-        )
-        .setFooter({ text: member.guild.name })
-        .setTimestamp();
-
-    channel.send({ embeds: [embed] });
-});
-
-
 
 
 
