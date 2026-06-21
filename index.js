@@ -368,6 +368,8 @@ client.on('guildBanAdd', async ban => {
 client.on('guildMemberUpdate', async (oldMember, newMember) => {
     const channel = newMember.guild.channels.cache.get('1517925042908827789');
     if (!channel) return;
+    console.log('TIMEOUT EVENT FIRED');
+    channel.send('TEST TIMEOUT EVENT').catch(console.error);
 
     const oldTimeout = oldMember.communicationDisabledUntilTimestamp;
     const newTimeout = newMember.communicationDisabledUntilTimestamp;
