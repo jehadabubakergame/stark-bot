@@ -1366,12 +1366,12 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
             {
                 name: '📤 من',
                 value: oldChannel ? oldChannel.name : 'لم يكن في روم',
-                inline: true
+                inline: false
             },
             {
                 name: '📥 إلى',
                 value: newChannel ? newChannel.name : 'خرج من الرومات',
-                inline: true
+                inline: false
             },
             {
                 name: '🆔 ID',
@@ -1383,17 +1383,6 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
 
     logChannel.send({ embeds: [embed] }).catch(console.error);
 });
-// يحسب الرسائل
-client.on('messageCreate', message => {
-    if (!message.guild || message.author.bot) return;
-
-    const stats = loadStats();
-    ensureUser(stats, message.guild.id, message.author.id);
-
-    stats[message.guild.id][message.author.id].messages += 1;
-    saveStats(stats);
-});
-
 // يحسب الناس اللي كانوا داخلين صوت أول ما البوت يشتغل
 client.once('ready', () => {
     const stats = loadStats();
