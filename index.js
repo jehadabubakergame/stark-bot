@@ -1360,7 +1360,13 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
         if (
             moveLog &&
             moveLog.target &&
-            moveLog.target.id === member.id &&
+            if (
+    moveLog &&
+    moveLog.executor &&
+    Date.now() - moveLog.createdTimestamp < 10000
+) {
+    movedBy = `<@${moveLog.executor.id}>`;
+}
             Date.now() - moveLog.createdTimestamp < 10000
         ) {
             movedBy = `<@${moveLog.executor.id}>`;
