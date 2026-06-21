@@ -426,15 +426,13 @@ client.on('guildBanAdd', async ban => {
 
 // ==================== لوقات التايم أوت ====================
 client.on('guildMemberUpdate', async (oldMember, newMember) => {
-    const channel = newMember.guild.channels.cache.get('1517925042908827789');
-    if (!channel) return;
-    console.log('TIMEOUT EVENT FIRED');
-    channel.send('TEST TIMEOUT EVENT').catch(console.error);
-
     const oldTimeout = oldMember.communicationDisabledUntilTimestamp;
     const newTimeout = newMember.communicationDisabledUntilTimestamp;
 
     if (oldTimeout === newTimeout) return;
+
+    const channel = newMember.guild.channels.cache.get('1517925042908827789');
+    if (!channel) return;
 
     await new Promise(resolve => setTimeout(resolve, 1000));
 
@@ -494,12 +492,6 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
 
     channel.send({ embeds: [embed] }).catch(console.error);
 });
-
-
-
-
-
-
 
 // ===================================================== طرد عضو =====================================================
 
