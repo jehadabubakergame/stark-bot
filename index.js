@@ -366,7 +366,7 @@ client.on('guildBanAdd', async ban => {
 
 // ==================== لوقات التايم أوت ====================
 client.on('guildMemberUpdate', async (oldMember, newMember) => {
-    const channel = newMember.guild.channels.cache.get('1517916976435953704');
+   const channel = newMember.guild.channels.cache.get('1517925042908827789');
     if (!channel) return;
 
     const oldTimeout = oldMember.communicationDisabledUntilTimestamp;
