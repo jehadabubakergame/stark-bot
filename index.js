@@ -1336,6 +1336,7 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
     let title;
     let color;
     let description;
+    let movedBy = null;
 
     if (!oldChannel && newChannel) {
         title = '🔊 دخول روم صوتي';
@@ -1346,102 +1347,77 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
         color = '#ff3333';
         description = `${member} خرج من روم صوتي`;
     } else if (oldChannel && newChannel && oldChannel.id !== newChannel.id) {
+        title = '🔁 تنقل بين الرومات الصوتية';
+        color = '#ffaa00';
+        description = `${member} انتقل من روم لروم`;
 
-    let movedBy = 'غير معروف';
+        movedBy = 'غير معروف';
 
-    try {
-        const fetchedLogs = await guild.fetchAuditLogs({
-            limit: 1,
-            type: AuditLogEvent.MemberMove
-        });
+        try {
+            const fetchedLogs = await guild.fetchAuditLogs({
+                limit: 1,
+                type: AuditLogEvent.MemberMove
+            });
 
-        const moveLog = fetchedLogs.entries.first();
+            const moveLog = fetchedLogs.entries.first();
 
-        if (
-            moveLog &&
-            moveLog.target &&
             if (
-    moveLog &&
-    moveLog.executor &&
-    Date.now() - moveLog.createdTimestamp < 10000
-) {
-    movedBy = `<@${moveLog.executor.id}>`;
-}
-            Date.now() - moveLog.createdTimestamp < 10000
-        ) {
-            movedBy = `<@${moveLog.executor.id}>`;
+                moveLog &&
+                moveLog.executor &&
+                Date.now() - moveLog.createdTimestamp < 10000
+            ) {
+                movedBy = `<@${moveLog.executor.id}>`;
+            }
+        } catch (err) {
+            console.error(err);
         }
-    } catch (err) {
-        console.error(err);
+    } else {
+        return;
     }
 
-    const embed = new EmbedBuilder()
-        .setColor('#ffaa00')
-        .setTitle('🔁 تنقل بين الرومات الصوتية')
-        .addFields(
-            {
-                name: '👤 العضو',
-                value: `${member}`,
-                inline: false
-            },
-            {
-                name: '📤 من',
-                value: oldChannel.name,
-                inline: false
-            },
-            {
-                name: '📥 إلى',
-                value: newChannel.name,
-                inline: false
-            },
-            {
-                name: '👮 بواسطة',
-                value: movedBy,
-                inline: false
-            },
-            {
-                name: '🆔 ID',
-                value: member.id,
-                inline: false
-            }
-        )
-        .setTimestamp();
+    const fields = [
+        {
+            name: '👤 العضو',
+            value: `${member}`,
+            inline: false
+        },
+        {
+            name: '📤 من',
+            value: oldChannel ? oldChannel.name : 'لم يكن في روم',
+            inline: false
+        },
+        {
+            name: '📥 إلى',
+            value: newChannel ? newChannel.name : 'خرج من الرومات',
+            inline: false
+        }
+    ];
 
-    return logChannel.send({ embeds: [embed] });
-} else {
-    return;
-}
+    if (movedBy) {
+        fields.push({
+            name: '👮 بواسطة',
+            value: movedBy,
+            inline: false
+        });
+    }
+
+    fields.push({
+        name: '🆔 ID',
+        value: member.id,
+        inline: false
+    });
 
     const embed = new EmbedBuilder()
         .setColor(color)
         .setTitle(title)
         .setDescription(description)
-        .addFields(
-            {
-                name: '👤 العضو',
-                value: `${member}`,
-                inline: false
-            },
-            {
-                name: '📤 من',
-                value: oldChannel ? oldChannel.name : 'لم يكن في روم',
-                inline: false
-            },
-            {
-                name: '📥 إلى',
-                value: newChannel ? newChannel.name : 'خرج من الرومات',
-                inline: false
-            },
-            {
-                name: '🆔 ID',
-                value: member.id,
-                inline: false
-            }
-        )
+        .addFields(fields)
         .setTimestamp();
 
     logChannel.send({ embeds: [embed] }).catch(console.error);
 });
+
+
 // يحسب الناس اللي كانوا داخلين صوت أول ما البوت يشتغل
 client.once('ready', () => {
     const stats = loadStats();
