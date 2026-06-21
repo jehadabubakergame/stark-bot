@@ -1326,33 +1326,67 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
 
 
 // ==================== إحصائيات الرسائل والصوت ====================
-// ==================== إحصائيات الرسائل والصوت ====================
-const STATS_FILE = './stats.json';
+client.on('voiceStateUpdate', async (oldState, newState) => {
+    const guild = oldState.guild || newState.guild;
+    const logChannel = guild.channels.cache.get('1517939702148366508');
+    if (!logChannel) return;
 
-function loadStats() {
-    if (!fs.existsSync(STATS_FILE)) return {};
-    try {
-        return JSON.parse(fs.readFileSync(STATS_FILE, 'utf8'));
-    } catch {
-        return {};
+    const member = newState.member || oldState.member;
+    if (!member || member.user.bot) return;
+
+    const oldChannel = oldState.channel;
+    const newChannel = newState.channel;
+
+    let title;
+    let color;
+    let description;
+
+    if (!oldChannel && newChannel) {
+        title = '🔊 دخول روم صوتي';
+        color = '#00ff66';
+        description = `${member} دخل روم صوتي`;
+    } else if (oldChannel && !newChannel) {
+        title = '🔇 خروج من روم صوتي';
+        color = '#ff3333';
+        description = `${member} خرج من روم صوتي`;
+    } else if (oldChannel && newChannel && oldChannel.id !== newChannel.id) {
+        title = '🔁 تنقل بين الرومات الصوتية';
+        color = '#ffaa00';
+        description = `${member} انتقل من روم لروم`;
+    } else {
+        return;
     }
-}
 
-function saveStats(stats) {
-    fs.writeFileSync(STATS_FILE, JSON.stringify(stats, null, 2));
-}
+    const embed = new EmbedBuilder()
+        .setColor(color)
+        .setTitle(title)
+        .setDescription(description)
+        .addFields(
+            {
+                name: '👤 العضو',
+                value: `${member}`,
+                inline: false
+            },
+            {
+                name: '📤 من',
+                value: oldChannel ? oldChannel.name : 'لم يكن في روم',
+                inline: true
+            },
+            {
+                name: '📥 إلى',
+                value: newChannel ? newChannel.name : 'خرج من الرومات',
+                inline: true
+            },
+            {
+                name: '🆔 ID',
+                value: member.id,
+                inline: false
+            }
+        )
+        .setTimestamp();
 
-function ensureUser(stats, guildId, userId) {
-    if (!stats[guildId]) stats[guildId] = {};
-    if (!stats[guildId][userId]) {
-        stats[guildId][userId] = {
-            messages: 0,
-            voiceMs: 0,
-            joinedAt: null
-        };
-    }
-}
-
+    logChannel.send({ embeds: [embed] }).catch(console.error);
+});
 // يحسب الرسائل
 client.on('messageCreate', message => {
     if (!message.guild || message.author.bot) return;
