@@ -88,11 +88,23 @@ client.on('guildMemberRemove', member => {
         .setTitle('🚨 مغادرة عضو')
         .setDescription(`${member.user.tag} غادر السيرفر`)
         .setThumbnail(member.user.displayAvatarURL({ dynamic: true, size: 256 }))
-        .addFields(
-            { name: '🆔 ID', value: member.id, inline: true },
-            { name: '👥 عدد الأعضاء', value: `${member.guild.memberCount}`, inline: true },
-            { name: '📅 عمر الحساب', value: `<t:${Math.floor(member.user.createdTimestamp / 1000)}:R>` }
-        )
+       .addFields(
+    {
+        name: '🆔 ID',
+        value: member.id,
+        inline: false
+    },
+    {
+        name: '👥 عدد الأعضاء',
+        value: `${member.guild.memberCount}`,
+        inline: false
+    },
+    {
+        name: '📅 عمر الحساب',
+        value: `<t:${Math.floor(member.user.createdTimestamp / 1000)}:R>`,
+        inline: false
+    }
+)
         .setFooter({ text: member.guild.name })
         .setTimestamp();
 
