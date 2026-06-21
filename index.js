@@ -1346,12 +1346,65 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
         color = '#ff3333';
         description = `${member} خرج من روم صوتي`;
     } else if (oldChannel && newChannel && oldChannel.id !== newChannel.id) {
-        title = '🔁 تنقل بين الرومات الصوتية';
-        color = '#ffaa00';
-        description = `${member} انتقل من روم لروم`;
-    } else {
-        return;
+
+    let movedBy = 'غير معروف';
+
+    try {
+        const fetchedLogs = await guild.fetchAuditLogs({
+            limit: 1,
+            type: AuditLogEvent.MemberMove
+        });
+
+        const moveLog = fetchedLogs.entries.first();
+
+        if (
+            moveLog &&
+            moveLog.target &&
+            moveLog.target.id === member.id &&
+            Date.now() - moveLog.createdTimestamp < 10000
+        ) {
+            movedBy = `<@${moveLog.executor.id}>`;
+        }
+    } catch (err) {
+        console.error(err);
     }
+
+    const embed = new EmbedBuilder()
+        .setColor('#ffaa00')
+        .setTitle('🔁 تنقل بين الرومات الصوتية')
+        .addFields(
+            {
+                name: '👤 العضو',
+                value: `${member}`,
+                inline: false
+            },
+            {
+                name: '📤 من',
+                value: oldChannel.name,
+                inline: false
+            },
+            {
+                name: '📥 إلى',
+                value: newChannel.name,
+                inline: false
+            },
+            {
+                name: '👮 بواسطة',
+                value: movedBy,
+                inline: false
+            },
+            {
+                name: '🆔 ID',
+                value: member.id,
+                inline: false
+            }
+        )
+        .setTimestamp();
+
+    return logChannel.send({ embeds: [embed] });
+} else {
+    return;
+}
 
     const embed = new EmbedBuilder()
         .setColor(color)
