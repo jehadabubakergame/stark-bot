@@ -117,6 +117,54 @@ client.on('guildMemberRemove', member => {
 
 
 
+
+
+
+// --------------------------------------------------------دخول عضو----------------------------------------------------------
+
+client.on('guildMemberAdd', member => {
+    const channel = member.guild.channels.cache.get('1517912082014535710');
+
+    if (!channel) return;
+
+    const embed = new EmbedBuilder()
+        .setColor('#00ff66')
+        .setAuthor({
+            name: member.user.tag,
+            iconURL: member.user.displayAvatarURL({ dynamic: true })
+        })
+        .setTitle('📥 عضو جديد')
+        .setDescription(`${member} انضم إلى السيرفر`)
+        .setThumbnail(member.user.displayAvatarURL({ dynamic: true, size: 256 }))
+        .addFields(
+            {
+                name: '🆔 ID',
+                value: member.id,
+                inline: false
+            },
+            {
+                name: '👥 عدد الأعضاء',
+                value: `${member.guild.memberCount}`,
+                inline: false
+            },
+            {
+                name: '📅 عمر الحساب',
+                value: `<t:${Math.floor(member.user.createdTimestamp / 1000)}:R>`,
+                inline: false
+            }
+        )
+        .setFooter({ text: member.guild.name })
+        .setTimestamp();
+
+    channel.send({ embeds: [embed] });
+});
+
+
+
+
+
+
+
 // ------------------------------------------------------ميوت ديفين------------------------------------------------------------
 
 
