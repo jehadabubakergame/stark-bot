@@ -366,13 +366,15 @@ client.on('guildBanAdd', async ban => {
 
 // ==================== لوقات التايم أوت ====================
 client.on('guildMemberUpdate', async (oldMember, newMember) => {
-   const channel = newMember.guild.channels.cache.get('1517925042908827789');
+    const channel = newMember.guild.channels.cache.get('1517925042908827789');
     if (!channel) return;
 
     const oldTimeout = oldMember.communicationDisabledUntilTimestamp;
     const newTimeout = newMember.communicationDisabledUntilTimestamp;
 
     if (oldTimeout === newTimeout) return;
+
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
     let title = '';
     let color = '';
@@ -399,18 +401,20 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
 
     try {
         const logs = await newMember.guild.fetchAuditLogs({
-            limit: 5,
+            limit: 10,
             type: AuditLogEvent.MemberUpdate
         });
 
         const log = logs.entries.find(entry =>
             entry.target?.id === newMember.id &&
-            Date.now() - entry.createdTimestamp < 10000
+            Date.now() - entry.createdTimestamp < 15000
         );
 
         if (log?.executor) executor = `<@${log.executor.id}>`;
         if (log?.reason) reason = log.reason;
-    } catch {}
+    } catch (err) {
+        console.error('TIMEOUT LOG ERROR:', err);
+    }
 
     const embed = new EmbedBuilder()
         .setColor(color)
@@ -426,7 +430,7 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
         .setFooter({ text: newMember.guild.name })
         .setTimestamp();
 
-    channel.send({ embeds: [embed] });
+    channel.send({ embeds: [embed] }).catch(console.error);
 });
 
 
