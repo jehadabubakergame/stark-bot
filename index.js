@@ -1179,11 +1179,14 @@ a { color:#00afff; }
     sortedMessages.forEach(msg => {
         const time = new Date(msg.createdTimestamp).toLocaleString('ar-JO');
         const author = `${msg.author.tag} (${msg.author.id})`;
-        const content = msg.content ? escapeHtml(msg.content) : '[رسالة بدون نص]';
+const content = msg.content ? escapeHtml(msg.content) : '[Message without text]';
+
+let userColor = '#' + msg.author.id.slice(-6).replace(/[^0-9]/g, '7');
+if (userColor.length < 7) userColor = '#00afff';
 
         html += `
 <div class="message">
-<div class="author">${escapeHtml(author)}</div>
+<div class="author" style="color:${userColor}">${escapeHtml(author)}</div>
 <div class="time">${time}</div>
 <div class="content">${content}</div>
 `;
@@ -1193,18 +1196,18 @@ a { color:#00afff; }
                 const url = attachment.url;
                 const name = escapeHtml(attachment.name || 'file');
                 const cleanUrl = url.split('?')[0].toLowerCase();
+const imageTypes = ['png', 'jpg', 'jpeg', 'gif', 'webp'];
+const fileExt = name.split('.').pop().toLowerCase();
 
-                if (
-                    cleanUrl.endsWith('.png') ||
-                    cleanUrl.endsWith('.jpg') ||
-                    cleanUrl.endsWith('.jpeg') ||
-                    cleanUrl.endsWith('.gif') ||
-                    cleanUrl.endsWith('.webp')
-                ) {
-                    html += `<img src="${url}" alt="${name}">`;
-                } else {
-                    html += `<p>📎 ملف: <a href="${url}" target="_blank">${name}</a></p>`;
-                }
+if (imageTypes.includes(fileExt)) {
+    html += `
+        <a href="${url}" target="_blank">
+            <img src="${url}" alt="${name}">
+        </a>
+    `;
+} else {
+    html += `<p>📎 File: <a href="${url}" target="_blank">${name}</a></p>`;
+}
             });
         }
 
