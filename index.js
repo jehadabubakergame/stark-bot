@@ -1637,14 +1637,9 @@ for (const msg of sortedMessages.values()) {
 
 
 
-
-//===================تكتات==============
-
-
-
+//=================== تكتات ==============
 
 if (interaction.commandName === 'ticketpanel') {
-
     const embed = new EmbedBuilder()
         .setColor('#2ecc71')
         .setTitle('🎟️ تذاكر السيرفر')
@@ -1679,19 +1674,57 @@ if (interaction.commandName === 'ticketpanel') {
     });
 }
 
-    const row = new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-            .setCustomId('ticket_apply')
-            .setLabel('قدم نفسك')
-            .setEmoji('🛡️')
-            .setStyle(ButtonStyle.Primary),
+if (interaction.commandName === 'panel') {
+    if (interaction.channel.id !== MUSIC_CHANNEL_ID) {
+        return interaction.reply({
+            content: '❌ لوحة الأغاني فقط في روم الأغاني.',
+            ephemeral: true
+        });
+    }
 
-        new ButtonBuilder()
-            .setCustomId('ticket_leadership')
-            .setLabel('تواصل مع القيادة')
-            .setEmoji('📩')
-            .setStyle(ButtonStyle.Danger)
-    );
+    const embed = new EmbedBuilder()
+        .setColor('#0099ff')
+        .setTitle('🎵 Control Panel')
+        .setDescription('Click a button, and control the music bot!')
+        .addFields({
+            name: 'User Friendly Control Panel',
+            value: '▶️ Play | ⏸️ Pause | ⏭️ Skip | 📋 Queue | ⏹️ Stop'
+        })
+        .setFooter({ text: 'Music Control Panel' })
+        .setTimestamp();
+
+    const row = new ActionRowBuilder()
+        .addComponents(
+            new ButtonBuilder()
+                .setCustomId('music_play')
+                .setEmoji('▶️')
+                .setLabel('Play')
+                .setStyle(ButtonStyle.Primary),
+
+            new ButtonBuilder()
+                .setCustomId('music_pause')
+                .setEmoji('⏸️')
+                .setLabel('Pause')
+                .setStyle(ButtonStyle.Primary),
+
+            new ButtonBuilder()
+                .setCustomId('music_skip')
+                .setEmoji('⏭️')
+                .setLabel('Skip')
+                .setStyle(ButtonStyle.Primary),
+
+            new ButtonBuilder()
+                .setCustomId('music_queue')
+                .setEmoji('📋')
+                .setLabel('Queue')
+                .setStyle(ButtonStyle.Secondary),
+
+            new ButtonBuilder()
+                .setCustomId('music_stop')
+                .setEmoji('⏹️')
+                .setLabel('Stop')
+                .setStyle(ButtonStyle.Danger)
+        );
 
     return interaction.reply({
         embeds: [embed],
@@ -1699,70 +1732,7 @@ if (interaction.commandName === 'ticketpanel') {
     });
 }
 
-
-
-
-
-        
-        if (interaction.commandName === 'panel') {
-            if (interaction.channel.id !== MUSIC_CHANNEL_ID) {
-                return interaction.reply({
-                    content: '❌ لوحة الأغاني فقط في روم الأغاني.',
-                    ephemeral: true
-                });
-            }
-
-            const embed = new EmbedBuilder()
-                .setColor('#0099ff')
-                .setTitle('🎵 Control Panel')
-                .setDescription('Click a button, and control the music bot!')
-                .addFields({
-                    name: 'User Friendly Control Panel',
-                    value: '▶️ Play | ⏸️ Pause | ⏭️ Skip | 📋 Queue | ⏹️ Stop'
-                })
-                .setFooter({ text: 'Music Control Panel' })
-                .setTimestamp();
-
-            const row = new ActionRowBuilder()
-                .addComponents(
-                    new ButtonBuilder()
-                        .setCustomId('music_play')
-                        .setEmoji('▶️')
-                        .setLabel('Play')
-                        .setStyle(ButtonStyle.Primary),
-
-                    new ButtonBuilder()
-                        .setCustomId('music_pause')
-                        .setEmoji('⏸️')
-                        .setLabel('Pause')
-                        .setStyle(ButtonStyle.Primary),
-
-                    new ButtonBuilder()
-                        .setCustomId('music_skip')
-                        .setEmoji('⏭️')
-                        .setLabel('Skip')
-                        .setStyle(ButtonStyle.Primary),
-
-                    new ButtonBuilder()
-                        .setCustomId('music_queue')
-                        .setEmoji('📋')
-                        .setLabel('Queue')
-                        .setStyle(ButtonStyle.Secondary),
-
-                    new ButtonBuilder()
-                        .setCustomId('music_stop')
-                        .setEmoji('⏹️')
-                        .setLabel('Stop')
-                        .setStyle(ButtonStyle.Danger)
-                );
-
-            return interaction.reply({
-                embeds: [embed],
-                components: [row]
-            });
-        }
-
-       if (interaction.commandName === 'stats') {
+if (interaction.commandName === 'stats') {
     const stats = loadStats();
     const guildStats = stats[interaction.guild.id] || {};
 
