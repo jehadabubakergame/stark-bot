@@ -1114,7 +1114,12 @@ if (interaction.customId === 'open_ticket') {
 
 
 
-if (interaction.customId === 'close_ticket') {
+
+            //close ticket
+
+
+
+            if (interaction.customId === 'close_ticket') {
     if (!interaction.channel.topic?.startsWith('ticket-owner:')) {
         return interaction.reply({
             content: '❌ هذا الروم ليس تكت.',
@@ -1136,32 +1141,83 @@ if (interaction.customId === 'close_ticket') {
         .filter(msg => !msg.author.bot)
         .sort((a, b) => a.createdTimestamp - b.createdTimestamp);
 
-    let transcriptText = `أرشيف التكت: ${interaction.channel.name}\n`;
-    transcriptText += `صاحب التكت: ${ownerId}\n`;
-    transcriptText += `أغلق بواسطة: ${interaction.user.tag}\n`;
-    transcriptText += `وقت الإغلاق: ${new Date().toLocaleString('ar-JO')}\n`;
-    transcriptText += `====================================\n\n`;
+    function escapeHtml(text) {
+        return String(text)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    let html = `
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>Ticket Archive</title>
+<style>
+body { background:#2f3136; color:white; font-family:Arial; padding:20px; }
+.header { background:#202225; padding:15px; border-radius:8px; margin-bottom:20px; }
+.message { background:#36393f; padding:12px; border-radius:8px; margin-bottom:12px; }
+.author { color:#00afff; font-weight:bold; }
+.time { color:#aaa; font-size:12px; margin-top:4px; }
+.content { margin-top:8px; white-space:pre-wrap; }
+img { max-width:450px; border-radius:8px; margin-top:10px; display:block; }
+a { color:#00afff; }
+</style>
+</head>
+<body>
+<div class="header">
+<h2>📁 أرشيف التكت: ${escapeHtml(interaction.channel.name)}</h2>
+<p>👤 صاحب التكت: ${ownerId}</p>
+<p>🔒 أغلق بواسطة: ${escapeHtml(interaction.user.tag)}</p>
+<p>⏰ وقت الإغلاق: ${new Date().toLocaleString('ar-JO')}</p>
+</div>
+`;
 
     sortedMessages.forEach(msg => {
         const time = new Date(msg.createdTimestamp).toLocaleString('ar-JO');
         const author = `${msg.author.tag} (${msg.author.id})`;
-        let content = msg.content || '';
+        const content = msg.content ? escapeHtml(msg.content) : '[رسالة بدون نص]';
 
-if (msg.attachments.size > 0) {
-    msg.attachments.forEach(attachment => {
-        content += `\n[ملف / صورة]: ${attachment.url}`;
+        html += `
+<div class="message">
+<div class="author">${escapeHtml(author)}</div>
+<div class="time">${time}</div>
+<div class="content">${content}</div>
+`;
+
+        if (msg.attachments.size > 0) {
+            msg.attachments.forEach(attachment => {
+                const url = attachment.url;
+                const name = escapeHtml(attachment.name || 'file');
+                const cleanUrl = url.split('?')[0].toLowerCase();
+
+                if (
+                    cleanUrl.endsWith('.png') ||
+                    cleanUrl.endsWith('.jpg') ||
+                    cleanUrl.endsWith('.jpeg') ||
+                    cleanUrl.endsWith('.gif') ||
+                    cleanUrl.endsWith('.webp')
+                ) {
+                    html += `<img src="${url}" alt="${name}">`;
+                } else {
+                    html += `<p>📎 ملف: <a href="${url}" target="_blank">${name}</a></p>`;
+                }
+            });
+        }
+
+        html += `</div>`;
     });
-}
 
-if (!content.trim()) {
-    content = '[رسالة بدون نص]';
-}
+    html += `
+</body>
+</html>
+`;
 
-transcriptText += `[${time}] ${author}:\n${content}\n\n`;
-    });
-
-    const fileName = `ticket-${interaction.channel.id}.txt`;
-    fs.writeFileSync(fileName, transcriptText, 'utf8');
+    const fileName = `ticket-${interaction.channel.id}.html`;
+    fs.writeFileSync(fileName, html, 'utf8');
 
     if (archiveChannel) {
         const embed = new EmbedBuilder()
