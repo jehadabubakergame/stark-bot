@@ -8,7 +8,9 @@ const {
     ButtonStyle,
     ModalBuilder,
     TextInputBuilder,
-    TextInputStyle
+    TextInputStyle,
+    ChannelType,
+    PermissionFlagsBits
 } = require('discord.js');
 
 const {
@@ -21,6 +23,12 @@ const {
 
 const playdl = require('play-dl');
 const fs = require('fs');
+
+const transcript = require('discord-html-transcripts');
+
+const TICKET_CATEGORY_ID = '1478894589304901856';
+const TICKET_ARCHIVE_CHANNEL_ID = '1508461846255108287';
+const TICKET_STAFF_ROLE_ID = '1470219436958154833';
 
 const MUSIC_CHANNEL_ID = '1479199357273116732';
 const musicQueues = new Map();
