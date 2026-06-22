@@ -1470,28 +1470,37 @@ for (const msg of sortedMessages.values()) {
 
 
 
-
+//===================تكتات==============
 
 
 
 
 if (interaction.commandName === 'ticketpanel') {
-
     const embed = new EmbedBuilder()
         .setColor('#2ecc71')
-        .setTitle('🎫 نظام التكتات')
+        .setTitle('🎟️ تذاكر السيرفر')
         .setDescription(
-            'اضغط الزر بالأسفل لفتح تذكرة دعم.\n\n' +
-            'سيتم إنشاء روم خاص بك وبالإدارة فقط.'
+            '**نظام الدعم والتذاكر 🧾**\n\n' +
+            'مرحباً بك في قسم الدعم!\n\n' +
+            'لفتح تذكرة، اضغط على أحد الأزرار بالأسفل، وسيتم إنشاء تذكرة خاصة بك.\n' +
+            'كما يجب عليك تعبئة الأسئلة المطلوبة منك بشكل كامل لاستكمال ملف تذكرتك.\n\n' +
+            '**يرجى اختيار سبب التذكرة المناسب**'
         )
+        .setFooter({ text: 'Stark Bot - Ticket System' })
         .setTimestamp();
 
     const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
-            .setCustomId('open_ticket')
-            .setLabel('فتح تذكرة')
-            .setEmoji('🎫')
-            .setStyle(ButtonStyle.Success)
+            .setCustomId('ticket_apply')
+            .setLabel('قدم نفسك')
+            .setEmoji('🛡️')
+            .setStyle(ButtonStyle.Primary),
+
+        new ButtonBuilder()
+            .setCustomId('ticket_leadership')
+            .setLabel('تواصل مع القيادة')
+            .setEmoji('📩')
+            .setStyle(ButtonStyle.Danger)
     );
 
     return interaction.reply({
@@ -1499,7 +1508,6 @@ if (interaction.commandName === 'ticketpanel') {
         components: [row]
     });
 }
-
 
 
 
