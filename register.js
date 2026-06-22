@@ -27,6 +27,11 @@ const commands = [
     new SlashCommandBuilder()
         .setName('panel')
         .setDescription('لوحة تحكم الأغاني')
+        .toJSON(),
+
+    new SlashCommandBuilder()
+        .setName('ticketpanel')
+        .setDescription('إرسال لوحة فتح التكتات')
         .toJSON()
 ];
 
@@ -42,7 +47,7 @@ const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
             { body: commands }
         );
 
-        console.log('تم تسجيل الأوامر بنجاح ومعهم panel');
+        console.log('تم تسجيل الأوامر بنجاح ومعهم ticketpanel');
     } catch (error) {
         console.error(error);
     }
