@@ -1400,6 +1400,13 @@ for (const msg of sortedMessages.values()) {
             content: `📎 مرفقات من ${msg.author.tag}`,
             files: files
         }).catch(console.error);
+
+        await archiveChannel.send({
+            embeds: [
+                new EmbedBuilder()
+                    .setImage('https://cdn.discordapp.com/attachments/1431362295027466240/1442963037547135159/dedd502625f2d20f.gif')
+            ]
+        }).catch(console.error);
     }
 }
      
