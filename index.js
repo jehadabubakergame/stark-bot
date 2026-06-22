@@ -1145,9 +1145,19 @@ if (interaction.customId === 'close_ticket') {
     sortedMessages.forEach(msg => {
         const time = new Date(msg.createdTimestamp).toLocaleString('ar-JO');
         const author = `${msg.author.tag} (${msg.author.id})`;
-        const content = msg.content || '[رسالة بدون نص / صورة أو ملف]';
+        let content = msg.content || '';
 
-        transcriptText += `[${time}] ${author}:\n${content}\n\n`;
+if (msg.attachments.size > 0) {
+    msg.attachments.forEach(attachment => {
+        content += `\n[ملف / صورة]: ${attachment.url}`;
+    });
+}
+
+if (!content.trim()) {
+    content = '[رسالة بدون نص]';
+}
+
+transcriptText += `[${time}] ${author}:\n${content}\n\n`;
     });
 
     const fileName = `ticket-${interaction.channel.id}.txt`;
