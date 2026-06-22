@@ -1237,6 +1237,16 @@ if (imageTypes.includes(fileExt)) {
             embeds: [embed],
             files: [fileName]
         });
+        for (const msg of sortedMessages.values()) {
+    if (msg.attachments.size > 0) {
+        const files = msg.attachments.map(att => att.url);
+
+        await archiveChannel.send({
+            content: `📎 مرفقات من ${msg.author.tag}`,
+            files: files
+        }).catch(console.error);
+    }
+}
     }
 
     fs.unlinkSync(fileName);
