@@ -1363,6 +1363,50 @@ if (interaction.customId === 'close_ticket') {
             }
         }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+if (interaction.commandName === 'ticketpanel') {
+
+    const embed = new EmbedBuilder()
+        .setColor('#2ecc71')
+        .setTitle('🎫 نظام التكتات')
+        .setDescription(
+            'اضغط الزر بالأسفل لفتح تذكرة دعم.\n\n' +
+            'سيتم إنشاء روم خاص بك وبالإدارة فقط.'
+        )
+        .setTimestamp();
+
+    const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+            .setCustomId('open_ticket')
+            .setLabel('فتح تذكرة')
+            .setEmoji('🎫')
+            .setStyle(ButtonStyle.Success)
+    );
+
+    return interaction.reply({
+        embeds: [embed],
+        components: [row]
+    });
+}
+
+
+
+
+
+
+        
         if (interaction.commandName === 'panel') {
             if (interaction.channel.id !== MUSIC_CHANNEL_ID) {
                 return interaction.reply({
