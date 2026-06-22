@@ -1411,7 +1411,7 @@ for (const msg of sortedMessages.values()) {
         await archiveChannel.send({
             embeds: [
                 new EmbedBuilder()
-                    .setImage('https://cdn.discordapp.com/attachments/1431362295027466240/1442963037547135159/dedd502625f2d20f.gif')
+                   .setImage('https://media.discordapp.net/attachments/1504096038510923776/1518662936778772672/bcd49d5bba237788.png')
             ]
         }).catch(console.error);
     }
@@ -1644,21 +1644,40 @@ for (const msg of sortedMessages.values()) {
 
 
 if (interaction.commandName === 'ticketpanel') {
-   const embed = new EmbedBuilder()
-    .setColor('#2ecc71')
-    .setTitle('🎟️ تذاكر السيرفر')
-    .setDescription(
-        '**نظام الدعم والتذاكر 🧾**\n\n' +
-        'مرحباً بك في قسم الدعم!\n\n' +
-        'لفتح تذكرة، اضغط على أحد الأزرار بالأسفل، وسيتم إنشاء تذكرة خاصة بك.\n' +
-        'كما يجب عليك تعبئة الأسئلة المطلوبة منك بشكل كامل لاستكمال ملف تذكرتك.\n\n' +
-        '**يرجى اختيار سبب التذكرة المناسب**'
-    )
-    .setImage('https://media.discordapp.net/attachments/1504096038510923776/1518662936778772672/bcd49d5bba237788.png?ex=6a3abc93&is=6a396b13&hm=74ad45d2a47a4f46d2bf88d1f55a8361dda8be82ac0f174ef0642ba8b5977e20&=&format=webp&quality=lossless&width=1376&height=914')
-    .setFooter({ text: 'Stark Bot - Ticket System' })
-    .setTimestamp();
+
+    const embed = new EmbedBuilder()
+        .setColor('#2ecc71')
+        .setTitle('🎟️ تذاكر السيرفر')
+        .setDescription(
+            '**نظام الدعم والتذاكر 🧾**\n\n' +
+            'مرحباً بك في قسم الدعم!\n\n' +
+            'لفتح تذكرة، اضغط على أحد الأزرار بالأسفل، وسيتم إنشاء تذكرة خاصة بك.\n' +
+            'كما يجب عليك تعبئة الأسئلة المطلوبة منك بشكل كامل لاستكمال ملف تذكرتك.\n\n' +
+            '**يرجى اختيار سبب التذكرة المناسب**'
+        )
+        .setImage('https://media.discordapp.net/attachments/1504096038510923776/1518662936778772672/bcd49d5bba237788.png')
         .setFooter({ text: 'Stark Bot - Ticket System' })
         .setTimestamp();
+
+    const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+            .setCustomId('ticket_apply')
+            .setLabel('قدم نفسك')
+            .setEmoji('🛡️')
+            .setStyle(ButtonStyle.Primary),
+
+        new ButtonBuilder()
+            .setCustomId('ticket_leadership')
+            .setLabel('تواصل مع القيادة')
+            .setEmoji('📩')
+            .setStyle(ButtonStyle.Danger)
+    );
+
+    return interaction.reply({
+        embeds: [embed],
+        components: [row]
+    });
+}
 
     const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
