@@ -1195,27 +1195,58 @@ if (playdl.yt_validate(fixedLink) !== 'video') {
 
 
 
-if (interaction.customId === 'ticket_apply' || interaction.customId === 'ticket_leadership') {
-    const isApply = interaction.customId === 'ticket_apply';
-
+if (interaction.customId === 'ticket_apply') {
     const modal = new ModalBuilder()
-        .setCustomId(isApply ? 'ticket_apply_modal' : 'ticket_leadership_modal')
-        .setTitle(isApply ? 'سبب تقديم نفسك؟' : 'سبب طلب تواصل مع القيادة؟');
+        .setCustomId('ticket_apply_modal')
+        .setTitle('يرجى تعبئة طلب التقديم');
 
-    const reasonInput = new TextInputBuilder()
-        .setCustomId('ticket_reason')
-        .setLabel(isApply ? 'سبب تقديم نفسك؟' : 'سبب تواصل مع القيادة؟')
-        .setPlaceholder('Enter your reason')
-        .setStyle(TextInputStyle.Paragraph)
-        .setRequired(true);
-
-    const row = new ActionRowBuilder().addComponents(reasonInput);
-    modal.addComponents(row);
+    modal.addComponents(
+        new ActionRowBuilder().addComponents(
+            new TextInputBuilder()
+                .setCustomId('name')
+                .setLabel('اسمك')
+                .setPlaceholder('اكتب اسمك')
+                .setStyle(TextInputStyle.Short)
+                .setRequired(true)
+        ),
+        new ActionRowBuilder().addComponents(
+            new TextInputBuilder()
+                .setCustomId('age')
+                .setLabel('العمر')
+                .setPlaceholder('اكتب عمرك')
+                .setStyle(TextInputStyle.Short)
+                .setRequired(true)
+        ),
+        new ActionRowBuilder().addComponents(
+            new TextInputBuilder()
+                .setCustomId('gang')
+                .setLabel('هل كنت بعصابة من قبل؟')
+                .setPlaceholder('اسم العصابة أو لا')
+                .setStyle(TextInputStyle.Short)
+                .setRequired(true)
+        )
+    );
 
     return interaction.showModal(modal);
 }
 
+if (interaction.customId === 'ticket_leadership') {
+    const modal = new ModalBuilder()
+        .setCustomId('ticket_leadership_modal')
+        .setTitle('سبب طلب تواصل مع القيادة');
 
+    modal.addComponents(
+        new ActionRowBuilder().addComponents(
+            new TextInputBuilder()
+                .setCustomId('ticket_reason')
+                .setLabel('سبب تواصلك مع القيادة')
+                .setStyle(TextInputStyle.Paragraph)
+                .setRequired(true)
+        )
+    );
+
+    return interaction.showModal(modal);
+}
 
 
 
