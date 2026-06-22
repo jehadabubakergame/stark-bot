@@ -1226,6 +1226,12 @@ if (interaction.customId === 'open_ticket') {
 
             if (interaction.customId === 'close_ticket') {
     if (!interaction.channel.topic?.startsWith('ticket-owner:')) {
+        if (!interaction.member.roles.cache.has(TICKET_STAFF_ROLE_ID)) {
+    return interaction.reply({
+        content: '❌ فقط الإدارة تقدر تغلق التذكرة.',
+        ephemeral: true
+    });
+}
         return interaction.reply({
             content: '❌ هذا الروم ليس تكت.',
             ephemeral: true
