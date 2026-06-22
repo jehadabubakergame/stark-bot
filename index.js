@@ -1114,7 +1114,6 @@ if (interaction.customId === 'open_ticket') {
 
 
 
-
 if (interaction.customId === 'close_ticket') {
     if (!interaction.channel.topic?.startsWith('ticket-owner:')) {
         return interaction.reply({
@@ -1131,13 +1130,30 @@ if (interaction.customId === 'close_ticket') {
     const ownerId = interaction.channel.topic.replace('ticket-owner:', '');
     const archiveChannel = interaction.guild.channels.cache.get(TICKET_ARCHIVE_CHANNEL_ID);
 
-    if (archiveChannel) {
-        const file = await transcript.createTranscript(interaction.channel, {
-            limit: -1,
-            returnBuffer: false,
-            filename: `${interaction.channel.name}.html`
-        });
+    const messages = await interaction.channel.messages.fetch({ limit: 100 });
 
+    const sortedMessages = messages
+        .filter(msg => !msg.author.bot)
+        .sort((a, b) => a.createdTimestamp - b.createdTimestamp);
+
+    let transcriptText = `أرشيف التكت: ${interaction.channel.name}\n`;
+    transcriptText += `صاحب التكت: ${ownerId}\n`;
+    transcriptText += `أغلق بواسطة: ${interaction.user.tag}\n`;
+    transcriptText += `وقت الإغلاق: ${new Date().toLocaleString('ar-JO')}\n`;
+    transcriptText += `====================================\n\n`;
+
+    sortedMessages.forEach(msg => {
+        const time = new Date(msg.createdTimestamp).toLocaleString('ar-JO');
+        const author = `${msg.author.tag} (${msg.author.id})`;
+        const content = msg.content || '[رسالة بدون نص / صورة أو ملف]';
+
+        transcriptText += `[${time}] ${author}:\n${content}\n\n`;
+    });
+
+    const fileName = `ticket-${interaction.channel.id}.txt`;
+    fs.writeFileSync(fileName, transcriptText, 'utf8');
+
+    if (archiveChannel) {
         const embed = new EmbedBuilder()
             .setColor('#ffaa00')
             .setTitle('📁 أرشيف تكت مغلق')
@@ -1150,9 +1166,11 @@ if (interaction.customId === 'close_ticket') {
 
         await archiveChannel.send({
             embeds: [embed],
-            files: [file]
+            files: [fileName]
         });
     }
+
+    fs.unlinkSync(fileName);
 
     setTimeout(() => {
         interaction.channel.delete().catch(console.error);
