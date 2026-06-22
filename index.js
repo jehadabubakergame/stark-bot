@@ -963,9 +963,30 @@ client.on('interactionCreate', async interaction => {
     try {
         // نافذة إدخال رابط الأغنية
         if (interaction.isModalSubmit()) {
-            if (interaction.customId === 'ticket_apply_modal' || interaction.customId === 'ticket_leadership_modal') {
-    const reason = interaction.fields.getTextInputValue('ticket_reason');
+          if (interaction.customId === 'ticket_apply_modal' || interaction.customId === 'ticket_leadership_modal') {
     const isApply = interaction.customId === 'ticket_apply_modal';
+
+    let description = '';
+
+    if (isApply) {
+        const name = interaction.fields.getTextInputValue('name');
+        const age = interaction.fields.getTextInputValue('age');
+        const gang = interaction.fields.getTextInputValue('gang');
+
+        description =
+            `مرحباً ${interaction.user}\n\n` +
+            `**نوع التذكرة:** قدم نفسك\n\n` +
+            `👤 **الاسم:** ${name}\n\n` +
+            `🎂 **العمر:** ${age}\n\n` +
+            `🛡️ **هل كنت بعصابة من قبل؟**\n${gang}`;
+    } else {
+        const reason = interaction.fields.getTextInputValue('ticket_reason');
+
+        description =
+            `مرحباً ${interaction.user}\n\n` +
+            `**نوع التذكرة:** تواصل مع القيادة\n\n` +
+            `**السبب:**\n${reason}`;
+    }
 
     const existing = interaction.guild.channels.cache.find(ch =>
         ch.topic === `ticket-owner:${interaction.user.id}`
@@ -1012,26 +1033,22 @@ client.on('interactionCreate', async interaction => {
     const embed = new EmbedBuilder()
         .setColor(isApply ? '#5865F2' : '#ff3333')
         .setTitle(isApply ? '🛡️ تذكرة تقديم' : '📩 تواصل مع القيادة')
-        .setDescription(
-            `مرحباً ${interaction.user}\n\n` +
-            `**نوع التذكرة:** ${isApply ? 'قدم نفسك' : 'تواصل مع القيادة'}\n\n` +
-            `**السبب:**\n${reason}`
-        )
+        .setDescription(description)
         .setTimestamp();
 
     const row = new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-        .setCustomId('claim_ticket')
-        .setLabel('استلام التكت')
-        .setEmoji('📌')
-        .setStyle(ButtonStyle.Success),
+        new ButtonBuilder()
+            .setCustomId('claim_ticket')
+            .setLabel('استلام التكت')
+            .setEmoji('📌')
+            .setStyle(ButtonStyle.Success),
 
-    new ButtonBuilder()
-        .setCustomId('close_ticket')
-        .setLabel('إغلاق التذكرة')
-        .setEmoji('🔒')
-        .setStyle(ButtonStyle.Danger)
-);
+        new ButtonBuilder()
+            .setCustomId('close_ticket')
+            .setLabel('إغلاق التذكرة')
+            .setEmoji('🔒')
+            .setStyle(ButtonStyle.Danger)
+    );
 
     await ticketChannel.send({
         content: `${interaction.user} <@&${TICKET_STAFF_ROLE_ID}>`,
@@ -1044,6 +1061,22 @@ client.on('interactionCreate', async interaction => {
         ephemeral: true
     });
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            
             if (interaction.customId !== 'music_play_modal') return;
 
             if (interaction.channel.id !== MUSIC_CHANNEL_ID) {
