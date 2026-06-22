@@ -1125,6 +1125,39 @@ if (playdl.yt_validate(fixedLink) !== 'video') {
         // أزرار لوحة الأغاني
         if (interaction.isButton()) {
 
+            if (interaction.customId === 'claim_ticket') {
+    if (!interaction.channel.topic?.startsWith('ticket-owner:')) {
+        return interaction.reply({
+            content: '❌ هذا الروم ليس تكت.',
+            ephemeral: true
+        });
+    }
+
+    if (!interaction.member.roles.cache.has(TICKET_STAFF_ROLE_ID)) {
+        return interaction.reply({
+            content: '❌ فقط الإدارة تقدر تستلم التكت.',
+            ephemeral: true
+        });
+    }
+
+    if (interaction.channel.topic.includes('claimed-by:')) {
+        const claimedBy = interaction.channel.topic.split('claimed-by:')[1];
+
+        return interaction.reply({
+            content: `❌ هذا التكت مستلم بالفعل بواسطة <@${claimedBy}>.`,
+            ephemeral: true
+        });
+    }
+
+    const newTopic = `${interaction.channel.topic}|claimed-by:${interaction.user.id}`;
+    await interaction.channel.setTopic(newTopic);
+
+    return interaction.reply({
+        content: `📌 تم استلام التكت بواسطة ${interaction.user}`,
+        ephemeral: false
+    });
+}
+
 
 
 
@@ -1249,7 +1282,10 @@ if (interaction.customId === 'open_ticket') {
         ephemeral: true
     });
 
-    const ownerId = interaction.channel.topic.replace('ticket-owner:', '');
+    const topicParts = interaction.channel.topic.split('|');
+const ownerId = topicParts[0].replace('ticket-owner:', '');
+const claimedPart = topicParts.find(part => part.startsWith('claimed-by:'));
+const claimedById = claimedPart ? claimedPart.replace('claimed-by:', '') : null;
     const archiveChannel = interaction.guild.channels.cache.get(TICKET_ARCHIVE_CHANNEL_ID);
 
     const messages = await interaction.channel.messages.fetch({ limit: 100 });
@@ -1344,10 +1380,11 @@ if (imageTypes.includes(fileExt)) {
             .setColor('#ffaa00')
             .setTitle('📁 أرشيف تكت مغلق')
             .addFields(
-                { name: '👤 صاحب التكت', value: `<@${ownerId}>`, inline: false },
-                { name: '🔒 أغلق بواسطة', value: `${interaction.user}`, inline: false },
-                { name: '📌 اسم التكت', value: interaction.channel.name, inline: false }
-            )
+    { name: '👤 صاحب التكت', value: `<@${ownerId}>`, inline: false },
+    { name: '📌 مستلم التكت', value: claimedById ? `<@${claimedById}>` : 'لم يتم الاستلام', inline: false },
+    { name: '🔒 أغلق بواسطة', value: `${interaction.user}`, inline: false },
+    { name: '📌 اسم التكت', value: interaction.channel.name, inline: false }
+)
             .setTimestamp();
 
         await archiveChannel.send({
