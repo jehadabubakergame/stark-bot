@@ -1043,6 +1043,152 @@ if (playdl.yt_validate(fixedLink) !== 'video') {
 
         // أزرار لوحة الأغاني
         if (interaction.isButton()) {
+
+
+if (interaction.customId === 'open_ticket') {
+    const existing = interaction.guild.channels.cache.find(ch =>
+        ch.topic === `ticket-owner:${interaction.user.id}`
+    );
+
+    if (existing) {
+        return interaction.reply({
+            content: `❌ عندك تكت مفتوح بالفعل: ${existing}`,
+            ephemeral: true
+        });
+    }
+
+    const ticketChannel = await interaction.guild.channels.create({
+        name: `ticket-${interaction.user.username}`,
+        type: ChannelType.GuildText,
+        parent: TICKET_CATEGORY_ID,
+        topic: `ticket-owner:${interaction.user.id}`,
+        permissionOverwrites: [
+            {
+                id: interaction.guild.id,
+                deny: [PermissionFlagsBits.ViewChannel]
+            },
+            {
+                id: interaction.user.id,
+                allow: [
+                    PermissionFlagsBits.ViewChannel,
+                    PermissionFlagsBits.SendMessages,
+                    PermissionFlagsBits.ReadMessageHistory
+                ]
+            },
+            {
+                id: TICKET_STAFF_ROLE_ID,
+                allow: [
+                    PermissionFlagsBits.ViewChannel,
+                    PermissionFlagsBits.SendMessages,
+                    PermissionFlagsBits.ReadMessageHistory
+                ]
+            }
+        ]
+    });
+
+    const embed = new EmbedBuilder()
+        .setColor('#2ecc71')
+        .setTitle('🎫 تذكرة دعم');
+
+    const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+            .setCustomId('close_ticket')
+            .setLabel('إغلاق التذكرة')
+            .setStyle(ButtonStyle.Danger)
+    );
+
+    await ticketChannel.send({
+        content: `${interaction.user} <@&${TICKET_STAFF_ROLE_ID}>`,
+        embeds: [embed],
+        components: [row]
+    });
+
+    return interaction.reply({
+        content: `✅ تم فتح التكت: ${ticketChannel}`,
+        ephemeral: true
+    });
+}
+
+
+
+
+
+
+
+if (interaction.customId === 'close_ticket') {
+    if (!interaction.channel.topic?.startsWith('ticket-owner:')) {
+        return interaction.reply({
+            content: '❌ هذا الروم ليس تكت.',
+            ephemeral: true
+        });
+    }
+
+    await interaction.reply({
+        content: '🔒 جاري إغلاق التكت وحفظ الأرشيف...',
+        ephemeral: true
+    });
+
+    const ownerId = interaction.channel.topic.replace('ticket-owner:', '');
+    const archiveChannel = interaction.guild.channels.cache.get(TICKET_ARCHIVE_CHANNEL_ID);
+
+    if (archiveChannel) {
+        const file = await transcript.createTranscript(interaction.channel, {
+            limit: -1,
+            returnBuffer: false,
+            filename: `${interaction.channel.name}.html`
+        });
+
+        const embed = new EmbedBuilder()
+            .setColor('#ffaa00')
+            .setTitle('📁 أرشيف تكت مغلق')
+            .addFields(
+                { name: '👤 صاحب التكت', value: `<@${ownerId}>`, inline: false },
+                { name: '🔒 أغلق بواسطة', value: `${interaction.user}`, inline: false },
+                { name: '📌 اسم التكت', value: interaction.channel.name, inline: false }
+            )
+            .setTimestamp();
+
+        await archiveChannel.send({
+            embeds: [embed],
+            files: [file]
+        });
+    }
+
+    setTimeout(() => {
+        interaction.channel.delete().catch(console.error);
+    }, 3000);
+
+    return;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            
+
+
+
+
+
+
+
+            
+
+            
             if (interaction.channel.id !== MUSIC_CHANNEL_ID) {
                 return interaction.reply({
                     content: '❌ أزرار الأغاني فقط في روم الأغاني.',
