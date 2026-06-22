@@ -43,11 +43,14 @@ const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
         console.log('جاري تسجيل الأوامر...');
 
         await rest.put(
-            Routes.applicationCommands('1517902347135877220'),
+            Routes.applicationGuildCommands(
+                '1517902347135877220', // Application ID
+                '1470219032002302046'  // Server ID
+            ),
             { body: commands }
         );
 
-        console.log('تم تسجيل الأوامر بنجاح ومعهم ticketpanel');
+        console.log('تم تسجيل الأوامر بنجاح');
     } catch (error) {
         console.error(error);
     }
