@@ -1020,12 +1020,18 @@ client.on('interactionCreate', async interaction => {
         .setTimestamp();
 
     const row = new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-            .setCustomId('close_ticket')
-            .setLabel('إغلاق التذكرة')
-            .setEmoji('🔒')
-            .setStyle(ButtonStyle.Danger)
-    );
+    new ButtonBuilder()
+        .setCustomId('claim_ticket')
+        .setLabel('استلام التكت')
+        .setEmoji('📌')
+        .setStyle(ButtonStyle.Success),
+
+    new ButtonBuilder()
+        .setCustomId('close_ticket')
+        .setLabel('إغلاق التذكرة')
+        .setEmoji('🔒')
+        .setStyle(ButtonStyle.Danger)
+);
 
     await ticketChannel.send({
         content: `${interaction.user} <@&${TICKET_STAFF_ROLE_ID}>`,
