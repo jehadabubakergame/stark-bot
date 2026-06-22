@@ -963,6 +963,81 @@ client.on('interactionCreate', async interaction => {
     try {
         // نافذة إدخال رابط الأغنية
         if (interaction.isModalSubmit()) {
+            if (interaction.customId === 'ticket_apply_modal' || interaction.customId === 'ticket_leadership_modal') {
+    const reason = interaction.fields.getTextInputValue('ticket_reason');
+    const isApply = interaction.customId === 'ticket_apply_modal';
+
+    const existing = interaction.guild.channels.cache.find(ch =>
+        ch.topic === `ticket-owner:${interaction.user.id}`
+    );
+
+    if (existing) {
+        return interaction.reply({
+            content: `❌ عندك تكت مفتوح بالفعل: ${existing}`,
+            ephemeral: true
+        });
+    }
+
+    const ticketChannel = await interaction.guild.channels.create({
+        name: isApply
+            ? `تقديم-${interaction.user.username}`
+            : `قيادة-${interaction.user.username}`,
+        type: ChannelType.GuildText,
+        parent: TICKET_CATEGORY_ID,
+        topic: `ticket-owner:${interaction.user.id}`,
+        permissionOverwrites: [
+            {
+                id: interaction.guild.id,
+                deny: [PermissionFlagsBits.ViewChannel]
+            },
+            {
+                id: interaction.user.id,
+                allow: [
+                    PermissionFlagsBits.ViewChannel,
+                    PermissionFlagsBits.SendMessages,
+                    PermissionFlagsBits.ReadMessageHistory
+                ]
+            },
+            {
+                id: TICKET_STAFF_ROLE_ID,
+                allow: [
+                    PermissionFlagsBits.ViewChannel,
+                    PermissionFlagsBits.SendMessages,
+                    PermissionFlagsBits.ReadMessageHistory
+                ]
+            }
+        ]
+    });
+
+    const embed = new EmbedBuilder()
+        .setColor(isApply ? '#5865F2' : '#ff3333')
+        .setTitle(isApply ? '🛡️ تذكرة تقديم' : '📩 تواصل مع القيادة')
+        .setDescription(
+            `مرحباً ${interaction.user}\n\n` +
+            `**نوع التذكرة:** ${isApply ? 'قدم نفسك' : 'تواصل مع القيادة'}\n\n` +
+            `**السبب:**\n${reason}`
+        )
+        .setTimestamp();
+
+    const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+            .setCustomId('close_ticket')
+            .setLabel('إغلاق التذكرة')
+            .setEmoji('🔒')
+            .setStyle(ButtonStyle.Danger)
+    );
+
+    await ticketChannel.send({
+        content: `${interaction.user} <@&${TICKET_STAFF_ROLE_ID}>`,
+        embeds: [embed],
+        components: [row]
+    });
+
+    return interaction.reply({
+        content: `✅ تم فتح التكت: ${ticketChannel}`,
+        ephemeral: true
+    });
+}
             if (interaction.customId !== 'music_play_modal') return;
 
             if (interaction.channel.id !== MUSIC_CHANNEL_ID) {
@@ -1043,6 +1118,36 @@ if (playdl.yt_validate(fixedLink) !== 'video') {
 
         // أزرار لوحة الأغاني
         if (interaction.isButton()) {
+
+
+
+
+
+if (interaction.customId === 'ticket_apply' || interaction.customId === 'ticket_leadership') {
+    const isApply = interaction.customId === 'ticket_apply';
+
+    const modal = new ModalBuilder()
+        .setCustomId(isApply ? 'ticket_apply_modal' : 'ticket_leadership_modal')
+        .setTitle(isApply ? 'سبب تقديم نفسك؟' : 'سبب طلب تواصل مع القيادة؟');
+
+    const reasonInput = new TextInputBuilder()
+        .setCustomId('ticket_reason')
+        .setLabel(isApply ? 'سبب تقديم نفسك؟' : 'سبب تواصل مع القيادة؟')
+        .setPlaceholder('Enter your reason')
+        .setStyle(TextInputStyle.Paragraph)
+        .setRequired(true);
+
+    const row = new ActionRowBuilder().addComponents(reasonInput);
+    modal.addComponents(row);
+
+    return interaction.showModal(modal);
+}
+
+
+
+
+
+            
 
 
 if (interaction.customId === 'open_ticket') {
