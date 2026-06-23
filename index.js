@@ -1407,12 +1407,20 @@ const content = msg.content ? escapeHtml(msg.content) : '[Message without text]'
 let userColor = '#' + msg.author.id.slice(-6).replace(/[^0-9]/g, '7');
 if (userColor.length < 7) userColor = '#00afff';
 
-        html += `
+
+        
+html += `
 <div class="message">
-<div class="author" style="color:${userColor}">${escapeHtml(author)}</div>
+<div class="author" style="color:${userColor};display:flex;align-items:center;gap:8px;">
+<img src="${msg.author.displayAvatarURL({ extension: 'png', size: 64 })}" style="width:32px;height:32px;border-radius:50%;">
+${escapeHtml(author)}
+</div>
 <div class="time">${time}</div>
 <div class="content">${content}</div>
 `;
+
+
+        
 
         if (msg.attachments.size > 0) {
             msg.attachments.forEach(attachment => {
