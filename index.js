@@ -1050,11 +1050,15 @@ client.on('interactionCreate', async interaction => {
             .setStyle(ButtonStyle.Danger)
     );
 
-    await ticketChannel.send({
-        content: `${interaction.user} <@&${TICKET_STAFF_ROLE_ID}>`,
-        embeds: [embed],
-        components: [row]
-    });
+   await ticketChannel.send({
+    content: `${interaction.user} <@&${TICKET_STAFF_ROLE_ID}>`,
+    embeds: [embed],
+    components: [row]
+});
+
+await ticketChannel.send({
+    content: `📋 **بيانات الطلب:**\n\n${description}`
+});
 
     return interaction.reply({
         content: `✅ تم فتح التكت: ${ticketChannel}`,
