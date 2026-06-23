@@ -1049,15 +1049,10 @@ client.on('interactionCreate', async interaction => {
             .setEmoji('🔒')
             .setStyle(ButtonStyle.Danger)
     );
-
-   await ticketChannel.send({
+await ticketChannel.send({
     content: `${interaction.user} <@&${TICKET_STAFF_ROLE_ID}>`,
     embeds: [embed],
     components: [row]
-});
-
-await ticketChannel.send({
-    content: `📋 **بيانات الطلب:**\n\n${description}`
 });
 
     return interaction.reply({
