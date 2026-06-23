@@ -1055,6 +1055,10 @@ await ticketChannel.send({
     components: [row]
 });
 
+await ticketChannel.send({
+    content: `📋 **بيانات الطلب:**\n\n${description}`
+});
+
     return interaction.reply({
         content: `✅ تم فتح التكت: ${ticketChannel}`,
         ephemeral: true
