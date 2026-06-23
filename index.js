@@ -1358,8 +1358,11 @@ const claimedById = claimedPart ? claimedPart.replace('claimed-by:', '') : null;
     const messages = await interaction.channel.messages.fetch({ limit: 100 });
 
     const sortedMessages = messages
-        .filter(msg => !msg.author.bot)
-        .sort((a, b) => a.createdTimestamp - b.createdTimestamp);
+    .filter(msg =>
+        !msg.author.bot ||
+        msg.content.startsWith('📋 **بيانات الطلب:**')
+    )
+    .sort((a, b) => a.createdTimestamp - b.createdTimestamp);
 
     function escapeHtml(text) {
         return String(text)
