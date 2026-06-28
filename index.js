@@ -1469,7 +1469,9 @@ if (imageTypes.includes(fileExt)) {
     embeds: [embed],
     files: [fileName]
 });
-
+await archiveChannel.send({
+    content: 'https://cdn.discordapp.com/attachments/1431362295027466240/1442963037547135159/dedd502625f2d20f.gif?ex=6a42214d&is=6a40cfcd&hm=5e4005c6930cef41ab900b2bf670722eba1673264a0b3aeeb4ca5ebf70eac150'
+});
 await archiveChannel.send({
     embeds: [
         new EmbedBuilder()
